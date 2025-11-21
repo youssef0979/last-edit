@@ -179,37 +179,64 @@ export type Database = {
           },
         ]
       }
+      performance_habits: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       performance_scores: {
         Row: {
           created_at: string
           date: string
-          habit_id: string
           id: string
+          performance_habit_id: string
           score: number
           user_id: string
         }
         Insert: {
           created_at?: string
           date: string
-          habit_id: string
           id?: string
+          performance_habit_id: string
           score: number
           user_id: string
         }
         Update: {
           created_at?: string
           date?: string
-          habit_id?: string
           id?: string
+          performance_habit_id?: string
           score?: number
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "performance_scores_habit_id_fkey"
-            columns: ["habit_id"]
+            foreignKeyName: "performance_scores_performance_habit_id_fkey"
+            columns: ["performance_habit_id"]
             isOneToOne: false
-            referencedRelation: "habits"
+            referencedRelation: "performance_habits"
             referencedColumns: ["id"]
           },
           {

@@ -64,11 +64,11 @@ export function ScoreInputDialog({
             .from("performance_scores")
             .upsert({
               user_id: user.id,
-              habit_id: habit.id,
+              performance_habit_id: habit.id,
               date: dateStr,
               score: scores[habit.id],
             }, {
-              onConflict: "habit_id,date",
+              onConflict: "performance_habit_id,date",
             });
 
           if (error) throw error;
