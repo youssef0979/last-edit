@@ -14,29 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      habit_completions: {
+        Row: {
+          completed: boolean
+          created_at: string
+          date: string
+          habit_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          date: string
+          habit_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          date?: string
+          habit_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habit_cycles: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_current: boolean
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_current?: boolean
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_current?: boolean
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      habit_notes: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       habits: {
         Row: {
           color: string
           created_at: string
+          difficulty_weight: number | null
           id: string
           is_active: boolean
+          is_preloaded: boolean | null
           name: string
+          priority: string | null
           user_id: string
         }
         Insert: {
           color: string
           created_at?: string
+          difficulty_weight?: number | null
           id?: string
           is_active?: boolean
+          is_preloaded?: boolean | null
           name: string
+          priority?: string | null
           user_id: string
         }
         Update: {
           color?: string
           created_at?: string
+          difficulty_weight?: number | null
           id?: string
           is_active?: boolean
+          is_preloaded?: boolean | null
           name?: string
+          priority?: string | null
           user_id?: string
         }
         Relationships: [
