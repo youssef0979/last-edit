@@ -24,7 +24,7 @@ const navigation = [
   { name: "Profile", href: "/profile", icon: User },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,6 +46,11 @@ export function Sidebar() {
     }
   };
 
+  const handleNavigation = (href: string) => {
+    navigate(href);
+    onNavigate?.();
+  };
+
   return (
     <div className="flex h-screen w-64 flex-col border-r bg-sidebar">
       <div className="flex h-16 items-center gap-2 border-b px-6">
@@ -59,11 +64,11 @@ export function Sidebar() {
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
           return (
-            <Link
+            <button
               key={item.name}
-              to={item.href}
+              onClick={() => handleNavigation(item.href)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                 isActive
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -71,7 +76,7 @@ export function Sidebar() {
             >
               <item.icon className="h-5 w-5" />
               {item.name}
-            </Link>
+            </button>
           );
         })}
       </nav>
