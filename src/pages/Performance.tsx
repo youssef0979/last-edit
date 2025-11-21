@@ -7,6 +7,7 @@ import { AddHabitDialog } from "@/components/performance/AddHabitDialog";
 import { ScoreInputDialog } from "@/components/performance/ScoreInputDialog";
 import { PerformanceChart } from "@/components/performance/PerformanceChart";
 import { PreviousTracksDialog } from "@/components/performance/PreviousTracksDialog";
+import { PerformanceHabitCard } from "@/components/performance/PerformanceHabitCard";
 import { format, startOfDay, endOfDay, subDays, addDays, isBefore, isAfter, isSameDay, eachDayOfInterval } from "date-fns";
 
 interface Habit {
@@ -246,6 +247,35 @@ const Performance = () => {
         </Card>
       ) : (
         <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Performance Habits</CardTitle>
+              <CardDescription>
+                Manage your performance tracking habits
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {habits.map((habit) => {
+                  const habitScores = scores.filter(s => s.performance_habit_id === habit.id);
+                  const avgScore = habitScores.length > 0
+                    ? Math.round(habitScores.reduce((sum, s) => sum + s.score, 0) / habitScores.length)
+                    : 0;
+                  
+                  return (
+                    <PerformanceHabitCard
+                      key={habit.id}
+                      habit={habit}
+                      avgScore={avgScore}
+                      totalScores={habitScores.length}
+                      onDelete={loadData}
+                    />
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
           <PerformanceChart
             habits={habits}
             scores={scores}
