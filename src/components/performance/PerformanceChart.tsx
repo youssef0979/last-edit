@@ -66,7 +66,7 @@ export function PerformanceChart({ habits, scores, startDate, endDate }: Perform
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg animate-fade-in">
       <CardHeader>
         <CardTitle>Current 2-Week Cycle</CardTitle>
         <CardDescription>
@@ -76,7 +76,7 @@ export function PerformanceChart({ habits, scores, startDate, endDate }: Perform
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" opacity={0.3} />
             <XAxis 
               dataKey="date" 
               className="text-xs"
@@ -88,7 +88,7 @@ export function PerformanceChart({ habits, scores, startDate, endDate }: Perform
               className="text-xs"
               tick={{ fill: "hsl(var(--muted-foreground))" }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--muted))', strokeWidth: 2 }} />
             <Legend 
               wrapperStyle={{ paddingTop: "20px" }}
               formatter={(value) => {
@@ -102,10 +102,12 @@ export function PerformanceChart({ habits, scores, startDate, endDate }: Perform
                 type="monotone"
                 dataKey={habit.id}
                 stroke={habit.color}
-                strokeWidth={2}
-                dot={{ fill: habit.color, r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={3}
+                dot={{ fill: habit.color, r: 5, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                activeDot={{ r: 8, strokeWidth: 2, stroke: "hsl(var(--background))" }}
                 connectNulls={false}
+                animationDuration={800}
+                animationEasing="ease-in-out"
               />
             ))}
           </LineChart>
