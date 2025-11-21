@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_notes: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string
+          date: string
+          id: string
+          reminder_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          reminder_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          reminder_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       habit_completions: {
         Row: {
           completed: boolean
