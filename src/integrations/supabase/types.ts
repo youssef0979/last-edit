@@ -275,6 +275,72 @@ export type Database = {
         }
         Relationships: []
       }
+      sleep_cycles: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          is_current: boolean
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          is_current?: boolean
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_current?: boolean
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sleep_entries: {
+        Row: {
+          bedtime: string | null
+          created_at: string
+          date: string
+          hours_slept: number
+          id: string
+          mood: string
+          notes: string | null
+          sleep_quality: number | null
+          user_id: string
+          wake_time: string | null
+        }
+        Insert: {
+          bedtime?: string | null
+          created_at?: string
+          date: string
+          hours_slept: number
+          id?: string
+          mood: string
+          notes?: string | null
+          sleep_quality?: number | null
+          user_id: string
+          wake_time?: string | null
+        }
+        Update: {
+          bedtime?: string | null
+          created_at?: string
+          date?: string
+          hours_slept?: number
+          id?: string
+          mood?: string
+          notes?: string | null
+          sleep_quality?: number | null
+          user_id?: string
+          wake_time?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
