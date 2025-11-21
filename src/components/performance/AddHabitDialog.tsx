@@ -51,7 +51,7 @@ export function AddHabitDialog({ onHabitAdded }: AddHabitDialogProps) {
       }
 
       const { error } = await supabase
-        .from("habits")
+        .from("performance_habits")
         .insert({
           user_id: user.id,
           name: name.trim(),

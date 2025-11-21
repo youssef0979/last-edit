@@ -17,7 +17,7 @@ interface Habit {
 }
 
 interface Score {
-  habit_id: string;
+  performance_habit_id: string;
   date: string;
   score: number;
 }
@@ -37,9 +37,9 @@ const Performance = () => {
       
       if (!user) throw new Error("Not authenticated");
 
-      // Load habits
+      // Load performance habits
       const { data: habitsData, error: habitsError } = await supabase
-        .from("habits")
+        .from("performance_habits")
         .select("*")
         .eq("user_id", user.id)
         .eq("is_active", true)
@@ -86,7 +86,7 @@ const Performance = () => {
       // Load scores for current cycle
       const { data: scoresData, error: scoresError } = await supabase
         .from("performance_scores")
-        .select("habit_id, date, score")
+        .select("performance_habit_id, date, score")
         .eq("user_id", user.id)
         .gte("date", format(currentCycleStart, "yyyy-MM-dd"))
         .lte("date", format(currentCycleEnd, "yyyy-MM-dd"));
@@ -142,7 +142,7 @@ const Performance = () => {
     const dateScores = scores.filter(s => s.date === dateStr);
     const result: Record<string, number> = {};
     dateScores.forEach(s => {
-      result[s.habit_id] = s.score;
+      result[s.performance_habit_id] = s.score;
     });
     return result;
   };

@@ -20,7 +20,7 @@ interface Cycle {
 }
 
 interface Score {
-  habit_id: string;
+  performance_habit_id: string;
   date: string;
   score: number;
 }
@@ -78,7 +78,7 @@ export function PreviousTracksDialog({ habits }: PreviousTracksDialogProps) {
 
       const { data, error } = await supabase
         .from("performance_scores")
-        .select("habit_id, date, score")
+        .select("performance_habit_id, date, score")
         .eq("user_id", user.id)
         .gte("date", cycle.start_date)
         .lte("date", cycle.end_date);

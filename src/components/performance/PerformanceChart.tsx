@@ -9,7 +9,7 @@ interface Habit {
 }
 
 interface Score {
-  habit_id: string;
+  performance_habit_id: string;
   date: string;
   score: number;
 }
@@ -34,7 +34,7 @@ export function PerformanceChart({ habits, scores, startDate, endDate }: Perform
     };
     
     habits.forEach(habit => {
-      const score = scores.find(s => s.habit_id === habit.id && s.date === dateStr);
+      const score = scores.find(s => s.performance_habit_id === habit.id && s.date === dateStr);
       dataPoint[habit.id] = score ? score.score : null;
     });
     
