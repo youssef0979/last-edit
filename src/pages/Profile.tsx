@@ -1,17 +1,163 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Mail, Calendar as CalendarIcon, Award } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { BioEditor } from "@/components/profile/BioEditor";
+import { ThemeSettings } from "@/components/profile/ThemeSettings";
+import { TrackerOverview } from "@/components/profile/TrackerOverview";
+import { format } from "date-fns";
+
+interface Profile {
+  id: string;
+  full_name?: string;
+  email?: string;
+  avatar_url?: string;
+  bio?: string;
+  created_at: string;
+}
 
 const Profile = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [trackerStats, setTrackerStats] = useState({
+    performance: { activeHabits: 0, totalScores: 0 },
+    habits: { activeHabits: 0, totalPoints: 0 },
+    sleep: { totalEntries: 0, avgHours: 0 },
+    calendar: { totalNotes: 0, upcomingReminders: 0 }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  const loadProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      setProfile(profileData);
+    } catch (error: any) {
+      toast({
+        title: "Error loading profile",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const loadTrackerStats = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("Not authenticated");
+
+      // Load Performance Tracker stats
+      const { data: perfHabits } = await supabase
+        .from('performance_habits')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      const { data: perfScores } = await supabase
+        .from('performance_scores')
+        .select('id')
+        .eq('user_id', user.id);
+
+      // Load Habit Tracker stats
+      const { data: habits } = await supabase
+        .from('habits')
+        .select('id, difficulty_weight')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      const { data: todayCompletions } = await supabase
+        .from('habit_completions')
+        .select('habit_id, completed')
+        .eq('user_id', user.id)
+        .eq('date', format(new Date(), 'yyyy-MM-dd'))
+        .eq('completed', true);
+
+      const totalPoints = todayCompletions?.reduce((sum, comp) => {
+        const habit = habits?.find(h => h.id === comp.habit_id);
+        return sum + (habit?.difficulty_weight || 0);
+      }, 0) || 0;
+
+      // Load Sleep Tracker stats
+      const { data: sleepEntries } = await supabase
+        .from('sleep_entries')
+        .select('hours_slept')
+        .eq('user_id', user.id);
+
+      const avgHours = sleepEntries && sleepEntries.length > 0
+        ? sleepEntries.reduce((sum, e) => sum + Number(e.hours_slept), 0) / sleepEntries.length
+        : 0;
+
+      // Load Calendar stats
+      const { data: calendarNotes } = await supabase
+        .from('calendar_notes')
+        .select('id, reminder_time')
+        .eq('user_id', user.id);
+
+      const upcomingReminders = calendarNotes?.filter(n => 
+        n.reminder_time && new Date(n.reminder_time) > new Date()
+      ).length || 0;
+
+      setTrackerStats({
+        performance: {
+          activeHabits: perfHabits?.length || 0,
+          totalScores: perfScores?.length || 0
+        },
+        habits: {
+          activeHabits: habits?.length || 0,
+          totalPoints
+        },
+        sleep: {
+          totalEntries: sleepEntries?.length || 0,
+          avgHours
+        },
+        calendar: {
+          totalNotes: calendarNotes?.length || 0,
+          upcomingReminders
+        }
+      });
+    } catch (error: any) {
+      console.error("Error loading tracker stats:", error);
+    }
+  };
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([loadProfile(), loadTrackerStats()]);
+      setIsLoading(false);
+    };
+
+    loadData();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-muted-foreground">Profile not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 space-y-8">
@@ -25,82 +171,56 @@ const Profile = () => {
         </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
-            <CardDescription>Your account details</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="h-8 w-8 text-primary" />
+          <CardContent className="space-y-6">
+            <AvatarUpload
+              currentAvatarUrl={profile.avatar_url}
+              userId={profile.id}
+              onAvatarUpdated={loadProfile}
+            />
+            
+            <div className="space-y-4 pt-4 border-t">
+              <div>
+                <p className="text-sm text-muted-foreground">Name</p>
+                <p className="font-medium">{profile.full_name || "Not set"}</p>
               </div>
               <div>
-                <p className="font-medium">{user?.user_metadata?.full_name || "User"}</p>
-                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium">{profile.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Member since</p>
+                <p className="font-medium">
+                  {format(new Date(profile.created_at), "MMMM d, yyyy")}
+                </p>
               </div>
             </div>
-            
-            <div className="space-y-3 pt-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Email:</span>
-                <span className="font-medium">{user?.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm">
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Member since:</span>
-                <span className="font-medium">
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "N/A"}
-                </span>
-              </div>
+
+            <div className="border-t pt-4">
+              <BioEditor
+                currentBio={profile.bio}
+                userId={profile.id}
+                onBioUpdated={loadProfile}
+              />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Achievements</CardTitle>
-            <CardDescription>Your milestones and progress</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: "7-Day Streak", icon: Award, color: "text-chart-1" },
-                { name: "Early Bird", icon: Award, color: "text-chart-2" },
-                { name: "Consistency King", icon: Award, color: "text-chart-4" },
-              ].map((achievement, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                  <achievement.icon className={`h-6 w-6 ${achievement.color}`} />
-                  <span className="font-medium">{achievement.name}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2 space-y-6">
+          <ThemeSettings />
+          <TrackerOverview stats={trackerStats} />
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Statistics</CardTitle>
-          <CardDescription>Your overall progress and activity</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-6">
-            {[
-              { label: "Total Activities", value: "127" },
-              { label: "Current Streak", value: "15 days" },
-              { label: "Overall Score", value: "85%" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center p-4 rounded-lg bg-muted/50">
-                <p className="text-3xl font-bold text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {profile.bio && (
+        <div className="text-center py-4 border-t">
+          <p className="text-sm text-muted-foreground/50 italic">"{profile.bio}"</p>
+        </div>
+      )}
     </div>
   );
 };
