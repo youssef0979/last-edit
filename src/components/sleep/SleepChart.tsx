@@ -81,7 +81,7 @@ export function SleepChart({ entries, startDate, endDate }: SleepChartProps) {
     : 0;
 
   return (
-    <Card>
+    <Card className="shadow-lg animate-fade-in">
       <CardHeader>
         <CardTitle>Sleep Pattern</CardTitle>
         <CardDescription>
@@ -91,7 +91,7 @@ export function SleepChart({ entries, startDate, endDate }: SleepChartProps) {
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" opacity={0.3} />
             <XAxis 
               dataKey="date" 
               className="text-xs"
@@ -104,15 +104,17 @@ export function SleepChart({ entries, startDate, endDate }: SleepChartProps) {
               tick={{ fill: "hsl(var(--muted-foreground))" }}
               label={{ value: 'Hours', angle: -90, position: 'insideLeft' }}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--muted))', strokeWidth: 2 }} />
             <Line
               type="monotone"
               dataKey="hours"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={{ fill: "hsl(var(--primary))", r: 4 }}
-              activeDot={{ r: 6 }}
+              stroke="hsl(var(--tracker-sleep))"
+              strokeWidth={3}
+              dot={{ fill: "hsl(var(--tracker-sleep))", r: 5, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+              activeDot={{ r: 8, strokeWidth: 2, stroke: "hsl(var(--background))" }}
               connectNulls={false}
+              animationDuration={800}
+              animationEasing="ease-in-out"
             />
           </LineChart>
         </ResponsiveContainer>

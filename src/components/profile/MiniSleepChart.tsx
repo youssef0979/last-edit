@@ -11,10 +11,12 @@ export function MiniSleepChart({ data }: MiniSleepChartProps) {
         <Line
           type="monotone"
           dataKey="hours"
-          stroke="hsl(var(--chart-3))"
-          strokeWidth={2}
+          stroke="hsl(var(--tracker-sleep))"
+          strokeWidth={2.5}
           dot={false}
           connectNulls={false}
+          animationDuration={600}
+          animationEasing="ease-in-out"
         />
       </LineChart>
     </ResponsiveContainer>

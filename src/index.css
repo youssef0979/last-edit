@@ -52,6 +52,18 @@ All colors MUST be HSL.
     --chart-3: 280 60% 60%;
     --chart-4: 45 80% 60%;
     --chart-5: 120 50% 50%;
+    
+    /* Tracker-specific colors */
+    --tracker-performance: 180 60% 50%;
+    --tracker-habits: 120 50% 50%;
+    --tracker-sleep: 280 60% 60%;
+    --tracker-calendar: 15 90% 65%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
   .dark {
@@ -97,6 +109,18 @@ All colors MUST be HSL.
     --chart-3: 280 60% 65%;
     --chart-4: 45 80% 65%;
     --chart-5: 120 50% 60%;
+    
+    /* Tracker-specific colors (dark mode) */
+    --tracker-performance: 180 60% 60%;
+    --tracker-habits: 120 50% 60%;
+    --tracker-sleep: 280 60% 65%;
+    --tracker-calendar: 15 90% 70%;
+    
+    /* Shadows (dark mode) */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
   }
 }
 

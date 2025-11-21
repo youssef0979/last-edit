@@ -11,10 +11,12 @@ export function MiniPerformanceChart({ data }: MiniPerformanceChartProps) {
         <Line
           type="monotone"
           dataKey="score"
-          stroke="hsl(var(--chart-1))"
-          strokeWidth={2}
+          stroke="hsl(var(--tracker-performance))"
+          strokeWidth={2.5}
           dot={false}
           connectNulls={false}
+          animationDuration={600}
+          animationEasing="ease-in-out"
         />
       </LineChart>
     </ResponsiveContainer>
