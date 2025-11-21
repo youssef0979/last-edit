@@ -159,7 +159,11 @@ const Habits = () => {
       .eq("is_active", true)
       .order("created_at");
 
-    if (data) setHabits(data);
+    if (data) {
+      setHabits(data);
+      // Recalculate streaks with the new habits list
+      await calculateStreaks(data);
+    }
   };
 
   const loadCompletions = async () => {
@@ -175,9 +179,11 @@ const Habits = () => {
     if (data) setCompletions(data);
   };
 
-  const calculateStreaks = async () => {
+  const calculateStreaks = async (currentHabits?: Habit[]) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
+    const habitsToCheck = currentHabits || habits;
 
     const { data: allCompletions } = await supabase
       .from("habit_completions")
@@ -189,7 +195,7 @@ const Habits = () => {
 
     const streakMap: Record<string, number> = {};
     
-    habits.forEach(habit => {
+    habitsToCheck.forEach(habit => {
       const habitCompletions = allCompletions
         .filter(c => c.habit_id === habit.id && c.completed)
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -348,17 +354,30 @@ const Habits = () => {
       )}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {habits.map((habit) => (
-          <HabitCard
-            key={habit.id}
-            habit={habit}
-            completed={getTodayCompletion(habit.id)}
-            streak={streaks[habit.id] || 0}
-            isLocked={false}
-            onToggle={() => toggleHabitCompletion(habit.id)}
-            onDelete={loadHabits}
-          />
-        ))}
+        {habits.length === 0 ? (
+          <Card className="col-span-full">
+            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+              <CheckSquare className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Active Habits</h3>
+              <p className="text-muted-foreground mb-4">
+                Add your first habit to start tracking
+              </p>
+              <AddHabitDialog onHabitAdded={loadHabits} />
+            </CardContent>
+          </Card>
+        ) : (
+          habits.map((habit) => (
+            <HabitCard
+              key={habit.id}
+              habit={habit}
+              completed={getTodayCompletion(habit.id)}
+              streak={streaks[habit.id] || 0}
+              isLocked={false}
+              onToggle={() => toggleHabitCompletion(habit.id)}
+              onDelete={loadHabits}
+            />
+          ))
+        )}
       </div>
 
       <WeeklyInsightCard weeklyStats={calculateWeeklyStats()} />

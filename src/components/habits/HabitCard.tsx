@@ -27,13 +27,31 @@ export function HabitCard({ habit, completed, streak, isLocked, onToggle, onDele
 
   const handleDelete = async () => {
     try {
-      const { error } = await supabase.from("habits").delete().eq("id", habit.id);
+      // First delete all habit completions for this habit
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      await supabase
+        .from("habit_completions")
+        .delete()
+        .eq("habit_id", habit.id)
+        .eq("user_id", user.id);
+
+      // Then delete the habit itself
+      const { error } = await supabase
+        .from("habits")
+        .delete()
+        .eq("id", habit.id)
+        .eq("user_id", user.id);
+      
       if (error) throw error;
       
       toast({
         title: "Habit deleted",
-        description: `"${habit.name}" has been removed.`
+        description: `"${habit.name}" has been removed permanently.`
       });
+      
+      // Trigger parent refresh
       onDelete();
     } catch (error: any) {
       toast({
