@@ -13,7 +13,6 @@ import { format, subDays, differenceInDays, startOfDay } from "date-fns";
 interface Profile {
   id: string;
   full_name?: string;
-  email?: string;
   avatar_url?: string;
   bio?: string;
   created_at: string;
@@ -47,6 +46,7 @@ interface DashboardData {
 
 const Profile = () => {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     performance: { activeHabits: 0, totalScores: 0, avgScore: 0, chartData: [] },
     habits: { activeHabits: 0, completedToday: 0, totalPoints: 0, currentStreak: 0 },
@@ -61,6 +61,9 @@ const Profile = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) throw new Error("Not authenticated");
+
+      // Get email from auth.users (secure)
+      setUserEmail(user.email || "");
 
       const { data: profileData, error } = await supabase
         .from('profiles')
@@ -289,7 +292,7 @@ const Profile = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
-                    <p className="font-medium">{profile.email}</p>
+                    <p className="font-medium">{userEmail}</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Member since</p>
