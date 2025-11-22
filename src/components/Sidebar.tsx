@@ -30,8 +30,11 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { name: "Sleep", href: "/sleep", icon: Moon },
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Profile", href: "/profile", icon: User },
-    ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: Shield }] : []),
   ];
+
+  const adminNavigation = isAdmin ? [
+    { name: "Admin Panel", href: "/admin", icon: Shield }
+  ] : [];
 
   const handleLogout = async () => {
     try {
@@ -83,6 +86,30 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             </button>
           );
         })}
+        
+        {adminNavigation.length > 0 && (
+          <>
+            <div className="my-2 h-px bg-border" />
+            {adminNavigation.map((item) => {
+              const isActive = location.pathname.startsWith(item.href);
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => handleNavigation(item.href)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  {item.name}
+                </button>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       <div className="border-t p-4 space-y-2">
