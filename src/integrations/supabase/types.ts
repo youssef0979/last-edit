@@ -83,6 +83,13 @@ export type Database = {
             referencedRelation: "habits"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "habit_completions_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits_readable"
+            referencedColumns: ["id"]
+          },
         ]
       }
       habit_cycles: {
@@ -276,6 +283,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "performance_scores_performance_habit_id_fkey"
+            columns: ["performance_habit_id"]
+            isOneToOne: false
+            referencedRelation: "performance_habits_readable"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "performance_scores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
@@ -382,7 +396,136 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      calendar_notes_readable: {
+        Row: {
+          color: string | null
+          content: string | null
+          created_at: string | null
+          date: string | null
+          full_name: string | null
+          id: string | null
+          reminder_time: string | null
+          title: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      habit_completions_readable: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          date: string | null
+          full_name: string | null
+          habit_color: string | null
+          habit_name: string | null
+          id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      habit_cycles_readable: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          full_name: string | null
+          id: string | null
+          is_current: boolean | null
+          start_date: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      habit_notes_readable: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          full_name: string | null
+          id: string | null
+          note: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      habits_readable: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          difficulty_weight: number | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          is_preloaded: boolean | null
+          name: string | null
+          priority: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      performance_cycles_readable: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          full_name: string | null
+          id: string | null
+          is_current: boolean | null
+          start_date: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      performance_habits_readable: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          name: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      performance_scores_readable: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          full_name: string | null
+          habit_color: string | null
+          habit_name: string | null
+          id: string | null
+          score: number | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      sleep_cycles_readable: {
+        Row: {
+          created_at: string | null
+          end_date: string | null
+          full_name: string | null
+          id: string | null
+          is_current: boolean | null
+          start_date: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
+      sleep_entries_readable: {
+        Row: {
+          bedtime: string | null
+          created_at: string | null
+          date: string | null
+          full_name: string | null
+          hours_slept: number | null
+          id: string | null
+          mood: string | null
+          notes: string | null
+          sleep_quality: number | null
+          username: string | null
+          wake_time: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
