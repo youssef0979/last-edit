@@ -33,13 +33,35 @@ export const UserSearchResult = ({ user }: UserSearchResultProps) => {
     const loadRelationship = async () => {
       if (!currentUserId) return;
 
-      const { data } = await supabase
-        .from("friends_readable")
+      const { data: friendData } = await supabase
+        .from("friends")
         .select("*")
         .or(`and(requester_id.eq.${currentUserId},addressee_id.eq.${user.id}),and(requester_id.eq.${user.id},addressee_id.eq.${currentUserId})`)
         .maybeSingle();
 
-      setRelationship(data);
+      if (friendData) {
+        // Enrich with profile data
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url")
+          .in("id", [friendData.requester_id, friendData.addressee_id]);
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        const requesterProfile = profileMap.get(friendData.requester_id);
+        const addresseeProfile = profileMap.get(friendData.addressee_id);
+
+        setRelationship({
+          ...friendData,
+          requester_username: requesterProfile?.username || "",
+          requester_full_name: requesterProfile?.full_name || "",
+          requester_avatar_url: requesterProfile?.avatar_url || "",
+          addressee_username: addresseeProfile?.username || "",
+          addressee_full_name: addresseeProfile?.full_name || "",
+          addressee_avatar_url: addresseeProfile?.avatar_url || "",
+        });
+      } else {
+        setRelationship(null);
+      }
     };
 
     loadRelationship();

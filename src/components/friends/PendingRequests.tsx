@@ -25,15 +25,38 @@ export const PendingRequests = () => {
       if (!currentUserId) return;
 
       try {
-        const { data, error } = await supabase
-          .from("friends_readable")
+        const { data: friendsData, error } = await supabase
+          .from("friends")
           .select("*")
           .eq("requester_id", currentUserId)
           .eq("status", "pending")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setPendingRequests(data || []);
+
+        // Get addressee profiles
+        const addresseeIds = friendsData?.map(f => f.addressee_id) || [];
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url")
+          .in("id", addresseeIds);
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+        const enrichedRequests = friendsData?.map(f => {
+          const addresseeProfile = profileMap.get(f.addressee_id);
+          return {
+            ...f,
+            requester_username: "",
+            requester_full_name: "",
+            requester_avatar_url: "",
+            addressee_username: addresseeProfile?.username || "",
+            addressee_full_name: addresseeProfile?.full_name || "",
+            addressee_avatar_url: addresseeProfile?.avatar_url || "",
+          };
+        }) || [];
+
+        setPendingRequests(enrichedRequests);
       } catch (error) {
         console.error("Error loading pending requests:", error);
       } finally {
