@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserSearch } from "@/components/friends/UserSearch";
+import { ActivityFeed } from "@/components/friends/ActivityFeed";
 import { PendingRequests } from "@/components/friends/PendingRequests";
 import { IncomingRequests } from "@/components/friends/IncomingRequests";
 import { FriendsList } from "@/components/friends/FriendsList";
@@ -16,6 +17,7 @@ export default function Friends() {
 
         <div className="grid gap-6 md:grid-cols-2 mb-8">
           <UserSearch />
+          <ActivityFeed />
         </div>
 
         <Tabs defaultValue="friends" className="w-full">

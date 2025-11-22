@@ -714,6 +714,19 @@ export type Database = {
         Args: { _owner_id: string; _viewer_id: string }
         Returns: boolean
       }
+      get_friend_activities: {
+        Args: { _limit?: number; _offset?: number; _viewer_id: string }
+        Returns: {
+          activity_data: Json
+          activity_type: string
+          avatar_url: string
+          created_at: string
+          full_name: string
+          id: string
+          user_id: string
+          username: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
