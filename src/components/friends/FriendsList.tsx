@@ -34,15 +34,45 @@ export const FriendsList = () => {
       if (!currentUserId) return;
 
       try {
-        const { data, error } = await supabase
-          .from("friends_readable")
+        const { data: friendsData, error } = await supabase
+          .from("friends")
           .select("*")
           .eq("status", "accepted")
           .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setFriendsList(data || []);
+
+        // Get all unique user IDs
+        const userIds = new Set<string>();
+        friendsData?.forEach(f => {
+          userIds.add(f.requester_id);
+          userIds.add(f.addressee_id);
+        });
+
+        // Fetch profiles for all users
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username, full_name, avatar_url")
+          .in("id", Array.from(userIds));
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+        const enrichedFriends = friendsData?.map(f => {
+          const requesterProfile = profileMap.get(f.requester_id);
+          const addresseeProfile = profileMap.get(f.addressee_id);
+          return {
+            ...f,
+            requester_username: requesterProfile?.username || "",
+            requester_full_name: requesterProfile?.full_name || "",
+            requester_avatar_url: requesterProfile?.avatar_url || "",
+            addressee_username: addresseeProfile?.username || "",
+            addressee_full_name: addresseeProfile?.full_name || "",
+            addressee_avatar_url: addresseeProfile?.avatar_url || "",
+          };
+        }) || [];
+
+        setFriendsList(enrichedFriends);
       } catch (error) {
         console.error("Error loading friends:", error);
       } finally {
