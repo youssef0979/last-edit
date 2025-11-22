@@ -23,6 +23,14 @@ export const fullNameSchema = z
   .max(100, "Full name must be less than 100 characters")
   .regex(/^[a-zA-Z\s'-]+$/, "Full name can only contain letters, spaces, hyphens, and apostrophes");
 
+// Username validation schema
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, "Username must be at least 3 characters")
+  .max(20, "Username must be less than 20 characters")
+  .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, dashes, and underscores");
+
 // Calendar note validation schema
 export const calendarNoteSchema = z.object({
   title: z

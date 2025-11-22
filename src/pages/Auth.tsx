@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity } from "lucide-react";
-import { passwordSchema, emailSchema, fullNameSchema } from "@/lib/validations";
+import { passwordSchema, emailSchema, fullNameSchema, usernameSchema } from "@/lib/validations";
 import { handleError } from "@/lib/error-handler";
 import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
@@ -21,6 +21,7 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
+  const [signupUsername, setSignupUsername] = useState("");
   
   // Rate limiting state
   const [loginAttempts, setLoginAttempts] = useState(0);
@@ -163,6 +164,16 @@ const Auth = () => {
       return;
     }
 
+    const usernameResult = usernameSchema.safeParse(signupUsername);
+    if (!usernameResult.success) {
+      toast({
+        title: "Invalid username",
+        description: usernameResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const passwordResult = passwordSchema.safeParse(signupPassword);
     if (!passwordResult.success) {
       toast({
@@ -178,13 +189,14 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
             full_name: signupFullName,
+            username: signupUsername,
           },
         },
       });
@@ -295,6 +307,21 @@ const Auth = () => {
                     required
                     disabled={isLoading || isSignupLocked}
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-username">Username</Label>
+                  <Input
+                    id="signup-username"
+                    type="text"
+                    placeholder="johndoe"
+                    value={signupUsername}
+                    onChange={(e) => setSignupUsername(e.target.value.toLowerCase())}
+                    required
+                    disabled={isLoading || isSignupLocked}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    3-20 characters, letters, numbers, dashes and underscores only
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
