@@ -10,18 +10,6 @@ import { PreviousCyclesDialog } from "@/components/habits/PreviousCyclesDialog";
 import { DailyNotesDialog } from "@/components/habits/DailyNotesDialog";
 import { WeeklyInsightCard } from "@/components/habits/WeeklyInsightCard";
 
-const PRELOADED_HABITS = [
-  { name: "no morning scroll", color: "#3b82f6", difficulty: 2, priority: "high" },
-  { name: "tooth brush", color: "#06b6d4", difficulty: 1, priority: "high" },
-  { name: "face brush", color: "#14b8a6", difficulty: 1, priority: "medium" },
-  { name: "facial cleanse", color: "#10b981", difficulty: 1, priority: "medium" },
-  { name: "no phone before 1 hour sleep", color: "#8b5cf6", difficulty: 2, priority: "high" },
-  { name: "reading 10 pages of Quran daily", color: "#22c55e", difficulty: 2, priority: "high" },
-  { name: "azkar al sabah", color: "#eab308", difficulty: 1, priority: "high" },
-  { name: "azkar al masaa", color: "#f97316", difficulty: 1, priority: "high" },
-  { name: "qeyam al layl", color: "#a855f7", difficulty: 3, priority: "high" },
-];
-
 interface Habit {
   id: string;
   name: string;
@@ -57,27 +45,6 @@ const Habits = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      // Check if user has any habits
-      const { data: existingHabits } = await supabase
-        .from("habits")
-        .select("*")
-        .eq("user_id", user.id);
-
-      // If no habits, create preloaded ones
-      if (!existingHabits || existingHabits.length === 0) {
-        const preloadedHabits = PRELOADED_HABITS.map(h => ({
-          user_id: user.id,
-          name: h.name,
-          color: h.color,
-          difficulty_weight: h.difficulty,
-          priority: h.priority,
-          is_preloaded: true,
-          is_active: true
-        }));
-
-        await supabase.from("habits").insert(preloadedHabits);
-      }
 
       // Initialize or get current cycle
       await initializeCycle(user.id);
