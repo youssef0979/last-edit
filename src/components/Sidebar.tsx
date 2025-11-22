@@ -9,25 +9,29 @@ import {
   Calendar, 
   User, 
   LogOut,
-  LayoutDashboard
+  LayoutDashboard,
+  Shield
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Performance", href: "/performance", icon: Activity },
-  { name: "Habits", href: "/habits", icon: CheckSquare },
-  { name: "Sleep", href: "/sleep", icon: Moon },
-  { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Profile", href: "/profile", icon: User },
-];
+import { useAdmin } from "@/hooks/use-admin";
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useAdmin();
+
+  const navigation = [
+    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Performance", href: "/performance", icon: Activity },
+    { name: "Habits", href: "/habits", icon: CheckSquare },
+    { name: "Sleep", href: "/sleep", icon: Moon },
+    { name: "Calendar", href: "/calendar", icon: Calendar },
+    { name: "Profile", href: "/profile", icon: User },
+    ...(isAdmin ? [{ name: "Admin", href: "/admin", icon: Shield }] : []),
+  ];
 
   const handleLogout = async () => {
     try {
