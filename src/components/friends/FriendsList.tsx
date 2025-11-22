@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,9 +12,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, Eye } from "lucide-react";
 
 export const FriendsList = () => {
+  const navigate = useNavigate();
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [friendsList, setFriendsList] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +139,12 @@ export const FriendsList = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => navigate(`/friends/${friend.requester_id !== currentUserId ? friend.requester_id : friend.addressee_id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Profile
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => removeFriend(friend.id)}
                         className="text-destructive"
