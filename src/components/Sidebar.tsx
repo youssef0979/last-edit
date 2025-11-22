@@ -11,7 +11,8 @@ import {
   User, 
   LogOut,
   LayoutDashboard,
-  Shield
+  Shield,
+  Users
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { name: "Habits", href: "/habits", icon: CheckSquare },
     { name: "Sleep", href: "/sleep", icon: Moon },
     { name: "Calendar", href: "/calendar", icon: Calendar },
+    { name: "Friends", href: "/friends", icon: Users },
     { name: "Profile", href: "/profile", icon: User },
   ];
 

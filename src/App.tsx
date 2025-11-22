@@ -11,6 +11,7 @@ import Habits from "./pages/Habits";
 import Sleep from "./pages/Sleep";
 import CalendarPage from "./pages/CalendarPage";
 import Profile from "./pages/Profile";
+import Friends from "./pages/Friends";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminContent from "./pages/admin/AdminContent";
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/sleep" element={<Layout><Sleep /></Layout>} />
             <Route path="/calendar" element={<Layout><CalendarPage /></Layout>} />
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
+            <Route path="/friends" element={<Layout><Friends /></Layout>} />
             <Route path="/admin" element={<AdminUsers />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/content" element={<AdminContent />} />
