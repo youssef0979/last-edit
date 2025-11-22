@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { BioEditor } from "@/components/profile/BioEditor";
 import { ThemeSettings } from "@/components/profile/ThemeSettings";
+import { PrivacySettings } from "@/components/profile/PrivacySettings";
 import { ProfileDashboard } from "@/components/profile/ProfileDashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, subDays, differenceInDays, startOfDay } from "date-fns";
@@ -312,8 +313,9 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <ThemeSettings />
+              <PrivacySettings />
             </div>
           </div>
         </TabsContent>

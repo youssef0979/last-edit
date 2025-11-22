@@ -370,6 +370,47 @@ export type Database = {
           },
         ]
       }
+      privacy_settings: {
+        Row: {
+          created_at: string
+          id: string
+          show_calendar: boolean
+          show_habits: boolean
+          show_performance: boolean
+          show_sleep: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          show_calendar?: boolean
+          show_habits?: boolean
+          show_performance?: boolean
+          show_sleep?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          show_calendar?: boolean
+          show_habits?: boolean
+          show_performance?: boolean
+          show_sleep?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privacy_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -653,6 +694,26 @@ export type Database = {
       }
     }
     Functions: {
+      are_friends: {
+        Args: { _user_id_1: string; _user_id_2: string }
+        Returns: boolean
+      }
+      can_view_calendar: {
+        Args: { _owner_id: string; _viewer_id: string }
+        Returns: boolean
+      }
+      can_view_habits: {
+        Args: { _owner_id: string; _viewer_id: string }
+        Returns: boolean
+      }
+      can_view_performance: {
+        Args: { _owner_id: string; _viewer_id: string }
+        Returns: boolean
+      }
+      can_view_sleep: {
+        Args: { _owner_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
