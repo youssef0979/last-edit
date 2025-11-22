@@ -1,4 +1,3 @@
-import { Layout } from "@/components/Layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserSearch } from "@/components/friends/UserSearch";
 import { PendingRequests } from "@/components/friends/PendingRequests";
@@ -7,8 +6,7 @@ import { FriendsList } from "@/components/friends/FriendsList";
 
 export default function Friends() {
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-6xl">
+    <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Friends</h1>
           <p className="text-muted-foreground">
@@ -40,6 +38,5 @@ export default function Friends() {
           </TabsContent>
         </Tabs>
       </div>
-    </Layout>
   );
 };
