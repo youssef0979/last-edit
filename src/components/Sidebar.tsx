@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Activity, 
   CheckSquare, 
@@ -16,12 +17,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/use-admin";
+import { useQuery } from "@tanstack/react-query";
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('avatar_url, full_name, username')
+        .eq('id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -112,11 +131,30 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         )}
       </nav>
 
-      <div className="border-t p-4 space-y-2">
+      <div className="border-t p-4 space-y-3">
+        <button
+          onClick={() => handleNavigation('/profile')}
+          className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
+        >
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={profile?.avatar_url || undefined} alt="Profile avatar" />
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              <User className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col items-start text-sm">
+            <span className="font-medium text-sidebar-foreground">
+              {profile?.full_name || profile?.username || 'User'}
+            </span>
+            <span className="text-xs text-muted-foreground">View Profile</span>
+          </div>
+        </button>
+        
         <div className="flex items-center justify-between">
           <span className="text-sm text-sidebar-foreground">Theme</span>
           <ThemeToggle />
         </div>
+        
         <Button
           variant="ghost"
           className="w-full justify-start gap-2"
