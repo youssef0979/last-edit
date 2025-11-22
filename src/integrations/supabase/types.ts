@@ -80,6 +80,48 @@ export type Database = {
         }
         Relationships: []
       }
+      friends: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["friend_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["friend_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["friend_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_completions: {
         Row: {
           completed: boolean
@@ -461,6 +503,38 @@ export type Database = {
         }
         Relationships: []
       }
+      friends_readable: {
+        Row: {
+          addressee_avatar_url: string | null
+          addressee_full_name: string | null
+          addressee_id: string | null
+          addressee_username: string | null
+          created_at: string | null
+          id: string | null
+          requester_avatar_url: string | null
+          requester_full_name: string | null
+          requester_id: string | null
+          requester_username: string | null
+          status: Database["public"]["Enums"]["friend_status"] | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "friends_addressee_id_fkey"
+            columns: ["addressee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "friends_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       habit_completions_readable: {
         Row: {
           completed: boolean | null
@@ -589,6 +663,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
+      friend_status: "pending" | "accepted" | "rejected" | "blocked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -717,6 +792,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
+      friend_status: ["pending", "accepted", "rejected", "blocked"],
     },
   },
 } as const
