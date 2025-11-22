@@ -8,6 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity } from "lucide-react";
+import { passwordSchema, emailSchema, fullNameSchema } from "@/lib/validations";
+import { handleError } from "@/lib/error-handler";
+import { PasswordStrengthIndicator } from "@/components/ui/password-strength-indicator";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -18,6 +21,12 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupFullName, setSignupFullName] = useState("");
+  
+  // Rate limiting state
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<Date | null>(null);
+  const [signupAttempts, setSignupAttempts] = useState(0);
+  const [signupLockoutUntil, setSignupLockoutUntil] = useState<Date | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -37,8 +46,43 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Reset lockout when time expires
+  useEffect(() => {
+    if (lockoutUntil && new Date() >= lockoutUntil) {
+      setLoginAttempts(0);
+      setLockoutUntil(null);
+    }
+    if (signupLockoutUntil && new Date() >= signupLockoutUntil) {
+      setSignupAttempts(0);
+      setSignupLockoutUntil(null);
+    }
+  }, [lockoutUntil, signupLockoutUntil]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check rate limiting
+    if (lockoutUntil && new Date() < lockoutUntil) {
+      const remainingSeconds = Math.ceil((lockoutUntil.getTime() - Date.now()) / 1000);
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate email
+    const emailResult = emailSchema.safeParse(loginEmail);
+    if (!emailResult.success) {
+      toast({
+        title: "Invalid email",
+        description: emailResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -49,16 +93,36 @@ const Auth = () => {
 
       if (error) throw error;
 
+      // Reset attempts on success
+      setLoginAttempts(0);
+      setLockoutUntil(null);
+
       toast({
         title: "Welcome back!",
         description: "Successfully logged in.",
       });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Increment failed attempts
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+
+      // Lock out after 5 failed attempts for 5 minutes
+      if (newAttempts >= 5) {
+        const lockoutTime = new Date(Date.now() + 5 * 60 * 1000);
+        setLockoutUntil(lockoutTime);
+        toast({
+          title: "Account temporarily locked",
+          description: "Too many failed login attempts. Please try again in 5 minutes.",
+          variant: "destructive",
+        });
+      } else {
+        const remainingAttempts = 5 - newAttempts;
+        toast({
+          title: "Login failed",
+          description: `${handleError(error, "auth")} ${remainingAttempts} attempt${remainingAttempts !== 1 ? 's' : ''} remaining.`,
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +130,49 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check rate limiting
+    if (signupLockoutUntil && new Date() < signupLockoutUntil) {
+      const remainingSeconds = Math.ceil((signupLockoutUntil.getTime() - Date.now()) / 1000);
+      toast({
+        title: "Too many attempts",
+        description: `Please wait ${remainingSeconds} seconds before trying again.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate inputs
+    const emailResult = emailSchema.safeParse(signupEmail);
+    if (!emailResult.success) {
+      toast({
+        title: "Invalid email",
+        description: emailResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const nameResult = fullNameSchema.safeParse(signupFullName);
+    if (!nameResult.success) {
+      toast({
+        title: "Invalid name",
+        description: nameResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const passwordResult = passwordSchema.safeParse(signupPassword);
+    if (!passwordResult.success) {
+      toast({
+        title: "Weak password",
+        description: passwordResult.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -84,20 +191,42 @@ const Auth = () => {
 
       if (error) throw error;
 
+      // Reset attempts on success
+      setSignupAttempts(0);
+      setSignupLockoutUntil(null);
+
       toast({
         title: "Account created!",
         description: "Welcome to Resolve. You're now logged in.",
       });
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Increment failed attempts
+      const newAttempts = signupAttempts + 1;
+      setSignupAttempts(newAttempts);
+
+      // Lock out after 3 failed signup attempts for 10 minutes
+      if (newAttempts >= 3) {
+        const lockoutTime = new Date(Date.now() + 10 * 60 * 1000);
+        setSignupLockoutUntil(lockoutTime);
+        toast({
+          title: "Too many signup attempts",
+          description: "Please try again in 10 minutes.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Signup failed",
+          description: handleError(error, "auth"),
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   };
+
+  const isLoginLocked = lockoutUntil && new Date() < lockoutUntil;
+  const isSignupLocked = signupLockoutUntil && new Date() < signupLockoutUntil;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4">
@@ -129,7 +258,7 @@ const Auth = () => {
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isLoginLocked}
                   />
                 </div>
                 <div className="space-y-2">
@@ -140,10 +269,14 @@ const Auth = () => {
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isLoginLocked}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || isLoginLocked}
+                >
                   {isLoading ? "Logging in..." : "Log In"}
                 </Button>
               </form>
@@ -160,7 +293,7 @@ const Auth = () => {
                     value={signupFullName}
                     onChange={(e) => setSignupFullName(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isSignupLocked}
                   />
                 </div>
                 <div className="space-y-2">
@@ -172,7 +305,7 @@ const Auth = () => {
                     value={signupEmail}
                     onChange={(e) => setSignupEmail(e.target.value)}
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || isSignupLocked}
                   />
                 </div>
                 <div className="space-y-2">
@@ -183,11 +316,15 @@ const Auth = () => {
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
                     required
-                    disabled={isLoading}
-                    minLength={6}
+                    disabled={isLoading || isSignupLocked}
                   />
+                  <PasswordStrengthIndicator password={signupPassword} />
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading || isSignupLocked}
+                >
                   {isLoading ? "Creating account..." : "Sign Up"}
                 </Button>
               </form>

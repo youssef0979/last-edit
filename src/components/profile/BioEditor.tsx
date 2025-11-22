@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Edit2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { bioSchema } from "@/lib/validations";
+import { handleError } from "@/lib/error-handler";
 
 interface BioEditorProps {
   currentBio?: string;
@@ -19,12 +21,24 @@ export function BioEditor({ currentBio, userId, onBioUpdated }: BioEditorProps) 
   const { toast } = useToast();
 
   const handleSave = async () => {
+    // Validate bio with zod
+    const validationResult = bioSchema.safeParse(bio);
+    
+    if (!validationResult.success) {
+      toast({
+        title: "Validation error",
+        description: validationResult.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSaving(true);
 
       const { error } = await supabase
         .from('profiles')
-        .update({ bio: bio.trim() || null })
+        .update({ bio: validationResult.data || null })
         .eq('id', userId);
 
       if (error) throw error;
@@ -38,8 +52,8 @@ export function BioEditor({ currentBio, userId, onBioUpdated }: BioEditorProps) 
       onBioUpdated();
     } catch (error: any) {
       toast({
-        title: "Error updating bio",
-        description: error.message,
+        title: "Error",
+        description: handleError(error, "database"),
         variant: "destructive"
       });
     } finally {

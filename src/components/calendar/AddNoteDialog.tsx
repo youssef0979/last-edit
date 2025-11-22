@@ -8,6 +8,8 @@ import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { calendarNoteSchema } from "@/lib/validations";
+import { handleError } from "@/lib/error-handler";
 
 const PRESET_COLORS = [
   "#3b82f6", // blue
@@ -46,11 +48,19 @@ export function AddNoteDialog({ date, existingNote, onNoteAdded, triggerButton }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!title.trim()) {
+
+    // Validate inputs with zod
+    const validationResult = calendarNoteSchema.safeParse({
+      title: title,
+      content: content || undefined,
+      color: color,
+      reminder_time: reminderTime ? new Date(reminderTime).toISOString() : null,
+    });
+
+    if (!validationResult.success) {
       toast({
-        title: "Error",
-        description: "Please enter a title",
+        title: "Validation error",
+        description: validationResult.error.errors[0].message,
         variant: "destructive",
       });
       return;
@@ -68,10 +78,10 @@ export function AddNoteDialog({ date, existingNote, onNoteAdded, triggerButton }
       const noteData = {
         user_id: user.id,
         date: format(date, "yyyy-MM-dd"),
-        title: title.trim(),
-        content: content.trim() || null,
-        color: color,
-        reminder_time: reminderTime ? new Date(reminderTime).toISOString() : null,
+        title: validationResult.data.title,
+        content: validationResult.data.content || null,
+        color: validationResult.data.color,
+        reminder_time: validationResult.data.reminder_time,
       };
 
       if (existingNote) {
@@ -110,7 +120,7 @@ export function AddNoteDialog({ date, existingNote, onNoteAdded, triggerButton }
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message,
+        description: handleError(error, "database"),
         variant: "destructive",
       });
     } finally {
