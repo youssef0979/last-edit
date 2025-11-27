@@ -80,100 +80,6 @@ export type Database = {
         }
         Relationships: []
       }
-      exercise_folders: {
-        Row: {
-          created_at: string
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          title: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      exercise_stats: {
-        Row: {
-          estimated_1rm: number | null
-          exercise_id: string
-          last_best_set_value: number | null
-          total_volume: number | null
-          updated_at: string
-        }
-        Insert: {
-          estimated_1rm?: number | null
-          exercise_id: string
-          last_best_set_value?: number | null
-          total_volume?: number | null
-          updated_at?: string
-        }
-        Update: {
-          estimated_1rm?: number | null
-          exercise_id?: string
-          last_best_set_value?: number | null
-          total_volume?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exercise_stats_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: true
-            referencedRelation: "exercises"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      exercises: {
-        Row: {
-          created_at: string
-          folder_id: string | null
-          id: string
-          name: string
-          primary_muscle: string | null
-          unit: Database["public"]["Enums"]["weight_unit"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          folder_id?: string | null
-          id?: string
-          name: string
-          primary_muscle?: string | null
-          unit?: Database["public"]["Enums"]["weight_unit"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          folder_id?: string | null
-          id?: string
-          name?: string
-          primary_muscle?: string | null
-          unit?: Database["public"]["Enums"]["weight_unit"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "exercises_folder_id_fkey"
-            columns: ["folder_id"]
-            isOneToOne: false
-            referencedRelation: "exercise_folders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       friends: {
         Row: {
           addressee_id: string
@@ -215,39 +121,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      gym_sessions: {
-        Row: {
-          created_at: string
-          id: string
-          preset_id: string | null
-          scheduled_date: string | null
-          session_index: number
-          status: Database["public"]["Enums"]["session_status"]
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          preset_id?: string | null
-          scheduled_date?: string | null
-          session_index: number
-          status?: Database["public"]["Enums"]["session_status"]
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          preset_id?: string | null
-          scheduled_date?: string | null
-          session_index?: number
-          status?: Database["public"]["Enums"]["session_status"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       habit_completions: {
         Row: {
@@ -634,54 +507,6 @@ export type Database = {
         }
         Relationships: []
       }
-      set_entries: {
-        Row: {
-          exercise_id: string
-          id: string
-          reps: number
-          session_id: string
-          set_number: number
-          timestamp: string
-          unit: Database["public"]["Enums"]["weight_unit"]
-          weight: number
-        }
-        Insert: {
-          exercise_id: string
-          id?: string
-          reps: number
-          session_id: string
-          set_number: number
-          timestamp?: string
-          unit: Database["public"]["Enums"]["weight_unit"]
-          weight: number
-        }
-        Update: {
-          exercise_id?: string
-          id?: string
-          reps?: number
-          session_id?: string
-          set_number?: number
-          timestamp?: string
-          unit?: Database["public"]["Enums"]["weight_unit"]
-          weight?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "set_entries_exercise_id_fkey"
-            columns: ["exercise_id"]
-            isOneToOne: false
-            referencedRelation: "exercises"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "set_entries_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "gym_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sleep_cycles: {
         Row: {
           created_at: string
@@ -979,8 +804,6 @@ export type Database = {
     Enums: {
       app_role: "admin" | "moderator" | "user"
       friend_status: "pending" | "accepted" | "rejected" | "blocked"
-      session_status: "planned" | "completed" | "skipped"
-      weight_unit: "kg" | "lbs"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1110,8 +933,6 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "moderator", "user"],
       friend_status: ["pending", "accepted", "rejected", "blocked"],
-      session_status: ["planned", "completed", "skipped"],
-      weight_unit: ["kg", "lbs"],
     },
   },
 } as const
