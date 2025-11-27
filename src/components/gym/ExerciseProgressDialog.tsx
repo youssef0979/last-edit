@@ -52,20 +52,62 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
     return acc;
   }, {}) || {};
 
-  // Convert to array and filter out skipped sessions for the graph
-  const chartData = Object.values(sessionData)
-    .filter((data: any) => data.status !== 'skipped')
-    .sort((a: any, b: any) => a.sessionIndex - b.sessionIndex)
-    .map((data: any) => ({
-      session: `Session ${data.sessionIndex}`,
-      sessionIndex: data.sessionIndex,
-      weight: data.weight,
-      reps: data.reps,
-      estimated1RM: data.estimated1RM,
-    }));
+  // Get all sessions for this user to include skipped ones
+  const { data: allSessions } = useQuery({
+    queryKey: ['all-sessions', exercise?.id],
+    enabled: !!exercise,
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      
+      const { data, error } = await supabase
+        .from('gym_sessions')
+        .select('session_index, status')
+        .eq('user_id', user.id)
+        .order('session_index');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
-  const allSessionData = Object.values(sessionData)
-    .sort((a: any, b: any) => a.sessionIndex - b.sessionIndex);
+  // Create complete chart data including all sessions
+  const chartData = allSessions?.map((session: any) => {
+    const sessionBestSet = sessionData[session.session_index];
+    
+    if (session.status === 'skipped' || !sessionBestSet) {
+      return {
+        session: `${session.session_index}`,
+        sessionIndex: session.session_index,
+        skipped: true,
+        estimated1RM: null,
+        label: session.status === 'skipped' ? 'Skipped' : 'No Data'
+      };
+    }
+    
+    return {
+      session: `${session.session_index}`,
+      sessionIndex: session.session_index,
+      weight: sessionBestSet.weight,
+      reps: sessionBestSet.reps,
+      estimated1RM: sessionBestSet.estimated1RM,
+      skipped: false
+    };
+  }) || [];
+
+  // Filter for active data points (non-skipped) for the line
+  const activeDataPoints = chartData.filter(d => !d.skipped && d.estimated1RM !== null);
+
+  const allSessionData = allSessions?.map((session: any) => {
+    const sessionBestSet = sessionData[session.session_index];
+    return {
+      sessionIndex: session.session_index,
+      status: session.status,
+      weight: sessionBestSet?.weight,
+      reps: sessionBestSet?.reps,
+      estimated1RM: sessionBestSet?.estimated1RM
+    };
+  }) || [];
 
   const { data: stats } = useQuery({
     queryKey: ['exercise-stats', exercise?.id],
@@ -115,19 +157,32 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
           {chartData.length > 0 ? (
             <div className="space-y-4">
               <Card className="p-4">
-                <h3 className="font-semibold mb-4">Estimated 1RM Progress (Best Set Per Session)</h3>
+                <h3 className="font-semibold mb-4">Strength Progress (Session by Session)</h3>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="session" />
-                    <YAxis />
+                    <XAxis 
+                      dataKey="session"
+                      label={{ value: 'Session Number', position: 'insideBottom', offset: -5 }}
+                    />
+                    <YAxis 
+                      label={{ value: 'Estimated 1RM', angle: -90, position: 'insideLeft' }}
+                    />
                     <Tooltip 
                       content={({ active, payload }) => {
                         if (active && payload && payload[0]) {
                           const data = payload[0].payload;
+                          if (data.skipped) {
+                            return (
+                              <div className="bg-background border rounded-lg p-3 shadow-lg">
+                                <p className="font-semibold">Session {data.sessionIndex}</p>
+                                <p className="text-sm text-muted-foreground">{data.label}</p>
+                              </div>
+                            );
+                          }
                           return (
                             <div className="bg-background border rounded-lg p-3 shadow-lg">
-                              <p className="font-semibold">{data.session}</p>
+                              <p className="font-semibold">Session {data.sessionIndex}</p>
                               <p className="text-sm text-muted-foreground">
                                 Best Set: {data.weight} {exercise.unit} × {data.reps} reps
                               </p>
@@ -145,11 +200,46 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                       dataKey="estimated1RM" 
                       stroke="hsl(var(--primary))" 
                       strokeWidth={2}
-                      dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                      connectNulls={false}
+                      dot={(props) => {
+                        const { cx, cy, payload } = props;
+                        if (payload.skipped) {
+                          return (
+                            <circle
+                              cx={cx}
+                              cy={cy}
+                              r={4}
+                              fill="hsl(var(--muted))"
+                              stroke="hsl(var(--border))"
+                              strokeWidth={2}
+                            />
+                          );
+                        }
+                        return (
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={4}
+                            fill="hsl(var(--primary))"
+                            stroke="hsl(var(--background))"
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
                       activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
+                <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-primary" />
+                    <span className="text-muted-foreground">Completed</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-muted border-2 border-border" />
+                    <span className="text-muted-foreground">Skipped</span>
+                  </div>
+                </div>
               </Card>
 
               <Card className="p-4">
@@ -161,22 +251,25 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                       className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/50"
                     >
                       <div className="flex items-center gap-3">
-                        <Badge variant={data.status === 'completed' ? 'default' : 'secondary'}>
+                        <Badge variant={data.status === 'completed' ? 'default' : data.status === 'skipped' ? 'secondary' : 'outline'}>
                           Session {data.sessionIndex}
                         </Badge>
-                        {data.status !== 'skipped' && (
+                        {data.status === 'skipped' && (
+                          <span className="text-sm text-muted-foreground">Skipped</span>
+                        )}
+                        {data.status !== 'skipped' && data.weight && (
                           <span className="text-sm text-muted-foreground">
                             Best: {data.weight} {exercise.unit} × {data.reps} reps
                           </span>
                         )}
+                        {data.status === 'planned' && !data.weight && (
+                          <span className="text-sm text-muted-foreground">In progress</span>
+                        )}
                       </div>
-                      {data.status !== 'skipped' && (
+                      {data.estimated1RM && (
                         <span className="text-sm font-medium">
                           {data.estimated1RM.toFixed(1)} {exercise.unit} est. 1RM
                         </span>
-                      )}
-                      {data.status === 'skipped' && (
-                        <span className="text-sm text-muted-foreground">Skipped</span>
                       )}
                     </div>
                   ))}
