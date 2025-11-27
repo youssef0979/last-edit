@@ -16,7 +16,7 @@ interface AddExerciseDialogProps {
 
 export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: AddExerciseDialogProps) {
   const [name, setName] = useState("");
-  const [folderId, setFolderId] = useState<string>("none");
+  const [folderId, setFolderId] = useState<string>("");
   const [primaryMuscle, setPrimaryMuscle] = useState("");
   const [unit, setUnit] = useState<"kg" | "lbs">("kg");
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
         .insert({
           name: name.trim(),
           user_id: user.id,
-          folder_id: folderId === "none" ? null : folderId,
+          folder_id: folderId || null,
           primary_muscle: primaryMuscle || null,
           unit,
         });
@@ -52,7 +52,7 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
 
       toast({ title: "Exercise created" });
       setName("");
-      setFolderId("none");
+      setFolderId("");
       setPrimaryMuscle("");
       setUnit("kg");
       onOpenChange(false);
@@ -99,7 +99,7 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
                   <SelectValue placeholder="Select a group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">No Group</SelectItem>
+                  <SelectItem value="">No Group</SelectItem>
                   {folders.map((folder) => (
                     <SelectItem key={folder.id} value={folder.id}>
                       {folder.title}
