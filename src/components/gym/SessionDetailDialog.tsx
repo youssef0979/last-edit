@@ -134,7 +134,7 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
                           <div>
                             <h3 className="font-semibold">{exercise?.name || 'Unknown'}</h3>
                             <p className="text-xs text-muted-foreground">
-                              {exerciseSets.length} set{exerciseSets.length !== 1 ? 's' : ''} • {totalVolume.toFixed(0)} total volume
+                              {exerciseSets.length} set{exerciseSets.length !== 1 ? 's' : ''} • {totalVolume.toFixed(0)} {exercise?.unit} total volume
                             </p>
                           </div>
                         </div>
@@ -146,7 +146,7 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
                           <div key={set.id} className="flex items-center justify-between text-sm border-l-2 border-primary/20 pl-3 py-1">
                             <span className="text-muted-foreground">Set {index + 1}</span>
                             <div className="flex items-center gap-4">
-                              <span className="font-medium">{set.weight} {set.unit}</span>
+                              <span className="font-medium">{set.weight} {exercise?.unit}</span>
                               <span className="text-muted-foreground">×</span>
                               <span className="font-medium">{set.reps} reps</span>
                               <Button
