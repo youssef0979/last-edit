@@ -44,9 +44,9 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
         .from('exercise_stats')
         .select('*')
         .eq('exercise_id', exercise.id)
-        .single();
+        .maybeSingle();
       
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     }
   });
