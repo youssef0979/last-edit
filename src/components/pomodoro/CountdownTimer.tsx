@@ -8,6 +8,7 @@ import { Play, Pause, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const CountdownTimer = () => {
+  const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(10);
   const [seconds, setSeconds] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -63,7 +64,7 @@ export const CountdownTimer = () => {
 
   const handleStart = () => {
     if (timeLeft === 0) {
-      const total = minutes * 60 + seconds;
+      const total = hours * 3600 + minutes * 60 + seconds;
       if (total === 0) {
         toast({
           title: "Invalid Time",
@@ -93,7 +94,8 @@ export const CountdownTimer = () => {
     setTotalTime(0);
   };
 
-  const displayMinutes = Math.floor(timeLeft / 60);
+  const displayHours = Math.floor(timeLeft / 3600);
+  const displayMinutes = Math.floor((timeLeft % 3600) / 60);
   const displaySeconds = timeLeft % 60;
   const progress = totalTime > 0 ? ((totalTime - timeLeft) / totalTime) * 100 : 0;
   const isActive = timeLeft > 0;
@@ -103,16 +105,28 @@ export const CountdownTimer = () => {
       <div className="space-y-6">
         {/* Input Section */}
         {!isActive && (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="hours">Hours</Label>
+              <Input
+                id="hours"
+                type="number"
+                min="0"
+                max="99"
+                value={hours}
+                onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))}
+                disabled={isRunning}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="minutes">Minutes</Label>
               <Input
                 id="minutes"
                 type="number"
                 min="0"
-                max="999"
+                max="59"
                 value={minutes}
-                onChange={(e) => setMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
                 disabled={isRunning}
               />
             </div>
@@ -134,6 +148,7 @@ export const CountdownTimer = () => {
         {/* Timer Display */}
         <div className="text-center space-y-4">
           <div className="text-8xl font-bold text-foreground tabular-nums">
+            {displayHours > 0 && <>{String(displayHours).padStart(2, "0")}:</>}
             {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
           </div>
 
