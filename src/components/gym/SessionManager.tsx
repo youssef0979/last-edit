@@ -36,18 +36,60 @@ export function SessionManager({ exercises }: SessionManagerProps) {
     }
   });
 
-  const handleSkipSession = async (sessionId: string) => {
+  const currentSession = sessions?.find(s => s.status === 'planned');
+  const nextSessionIndex = sessions && sessions.length > 0 
+    ? Math.max(...sessions.map(s => s.session_index)) + 1 
+    : 1;
+
+  const handleStartSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // If there's a planned session, use it
+      if (currentSession) {
+        setSelectedSession(currentSession);
+        setCreateOpen(false);
+        return;
+      }
+
+      // Create a new session
+      const { data, error } = await supabase
+        .from('gym_sessions')
+        .insert({
+          user_id: user.id,
+          session_index: nextSessionIndex,
+          status: 'planned',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({ title: `Session ${nextSessionIndex} started` });
+      refetch();
+      setSelectedSession(data);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCompleteSession = async (sessionId: string, sessionIndex: number) => {
     try {
       const { error } = await supabase
         .from('gym_sessions')
-        .update({ status: 'skipped' })
+        .update({ status: 'completed', scheduled_date: new Date().toISOString() })
         .eq('id', sessionId);
 
       if (error) throw error;
 
       toast({
-        title: "Session skipped",
-        description: "This session has been marked as skipped.",
+        title: "Session completed",
+        description: `Session ${sessionIndex} marked as complete.`,
       });
       refetch();
     } catch (error: any) {
@@ -59,32 +101,76 @@ export function SessionManager({ exercises }: SessionManagerProps) {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'skipped':
-        return <XCircle className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Calendar className="h-4 w-4 text-blue-500" />;
+  const handleSkipSession = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // Create a skipped session
+      const { error } = await supabase
+        .from('gym_sessions')
+        .insert({
+          user_id: user.id,
+          session_index: nextSessionIndex,
+          status: 'skipped',
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Session skipped",
+        description: `Session ${nextSessionIndex} marked as skipped for continuity.`,
+      });
+      refetch();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
-  const nextSessionIndex = sessions && sessions.length > 0 
-    ? Math.max(...sessions.map(s => s.session_index)) + 1 
-    : 1;
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return <Badge variant="default">Completed</Badge>;
+      case 'skipped':
+        return <Badge variant="secondary">Skipped</Badge>;
+      default:
+        return <Badge variant="outline">In Progress</Badge>;
+    }
+  };
 
   return (
     <>
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Training Sessions</h2>
-          <p className="text-muted-foreground">Next session: Day {nextSessionIndex}</p>
+          <p className="text-muted-foreground">
+            {currentSession 
+              ? `Session ${currentSession.session_index} in progress`
+              : `Ready for Session ${nextSessionIndex}`
+            }
+          </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Session
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleSkipSession} 
+            variant="outline"
+            className="gap-2"
+          >
+            <XCircle className="h-4 w-4" />
+            Skip Day
+          </Button>
+          <Button 
+            onClick={handleStartSession} 
+            className="gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {currentSession ? 'Continue Session' : 'Start Training'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -92,34 +178,37 @@ export function SessionManager({ exercises }: SessionManagerProps) {
           <Card 
             key={session.id} 
             className="p-4 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setSelectedSession(session)}
+            onClick={() => session.status !== 'skipped' && setSelectedSession(session)}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                {getStatusIcon(session.status)}
-                <div>
-                  <h3 className="font-semibold">Day {session.session_index}</h3>
-                  {session.scheduled_date && (
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(session.scheduled_date), 'PPP')}
-                    </p>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <h3 className="font-semibold">
+                      Session {session.session_index}
+                      {session.status === 'skipped' && ' (Skipped)'}
+                    </h3>
+                    {session.scheduled_date && session.status !== 'skipped' && (
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(session.scheduled_date), 'PPP')}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={session.status === 'completed' ? 'default' : session.status === 'skipped' ? 'secondary' : 'outline'}>
-                  {session.status}
-                </Badge>
+                {getStatusBadge(session.status)}
                 {session.status === 'planned' && (
                   <Button
-                    variant="ghost"
+                    variant="default"
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSkipSession(session.id);
+                      handleCompleteSession(session.id, session.session_index);
                     }}
                   >
-                    Skip
+                    Complete
                   </Button>
                 )}
               </div>
@@ -128,25 +217,18 @@ export function SessionManager({ exercises }: SessionManagerProps) {
         ))}
 
         {(!sessions || sessions.length === 0) && (
-          <div className="text-center py-12 text-muted-foreground">
+          <div className="text-center py-12 text-muted-foreground border rounded-lg">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>No sessions yet. Create your first training session.</p>
+            <p className="font-medium">No training sessions yet</p>
+            <p className="text-sm">Click "Start Training" to begin Session 1</p>
           </div>
         )}
       </div>
 
-      <CreateSessionDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        exercises={exercises}
-        nextSessionIndex={nextSessionIndex}
-        onSuccess={refetch}
-      />
-
       <SessionDetailDialog
         session={selectedSession}
         exercises={exercises}
-        open={!!selectedSession}
+        open={!!selectedSession && selectedSession.status !== 'skipped'}
         onOpenChange={(open) => !open && setSelectedSession(null)}
         onUpdate={refetch}
       />
