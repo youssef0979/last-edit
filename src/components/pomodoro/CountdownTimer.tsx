@@ -189,7 +189,7 @@ export const CountdownTimer = () => {
           )}
           
           <div className="flex items-center justify-center gap-8">
-            {isActive && <ProgressRing progress={progress} size={150} strokeWidth={10} />}
+            {isActive && <ProgressRing progress={progress} size={150} strokeWidth={10} showPercentage />}
             <div className="text-7xl font-bold text-foreground tabular-nums">
               {displayHours > 0 && <>{String(displayHours).padStart(2, "0")}:</>}
               {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
