@@ -95,8 +95,30 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
     };
   }) || [];
 
-  // Filter for active data points (non-skipped) for the line
-  const activeDataPoints = chartData.filter(d => !d.skipped && d.estimated1RM !== null);
+  // Create line segments with proper gradient values
+  const createLineSegments = () => {
+    const segments: any[] = [];
+    
+    for (let i = 0; i < chartData.length - 1; i++) {
+      const current = chartData[i];
+      const next = chartData[i + 1];
+      
+      // Create a segment for each consecutive pair
+      const segmentData = chartData.map((point, idx) => {
+        if (idx < i || idx > i + 1) {
+          return { ...point, estimated1RM: null };
+        }
+        return point;
+      });
+      
+      const hasSkipped = current.skipped || next.skipped;
+      segments.push({ data: segmentData, hasSkipped, key: `segment-${i}` });
+    }
+    
+    return segments;
+  };
+
+  const lineSegments = createLineSegments();
 
   const allSessionData = allSessions?.map((session: any) => {
     const sessionBestSet = sessionData[session.session_index];
@@ -159,10 +181,26 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
               <Card className="p-4">
                 <h3 className="font-semibold mb-4">Strength Progress (Session by Session)</h3>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Each point represents the best set from that training session. Skipped sessions appear as neutral placeholders to maintain consistent numbering.
+                  Each point represents the best set from that training session. Lines fade to red as they approach skipped sessions.
                 </p>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
+                    <defs>
+                      {lineSegments.map((segment, idx) => {
+                        if (!segment.hasSkipped) return null;
+                        return (
+                          <linearGradient 
+                            key={`gradient-${idx}`} 
+                            id={`gradient-${idx}`}
+                            x1="0%" y1="0%" x2="100%" y2="0%"
+                          >
+                            <stop offset="0%" stopColor="hsl(var(--primary))" />
+                            <stop offset="50%" stopColor="hsl(0, 70%, 50%)" />
+                            <stop offset="100%" stopColor="hsl(var(--primary))" />
+                          </linearGradient>
+                        );
+                      })}
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="session"
@@ -198,12 +236,26 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                         return null;
                       }}
                     />
+                    {lineSegments.map((segment, idx) => (
+                      <Line 
+                        key={segment.key}
+                        type="monotone" 
+                        dataKey="estimated1RM" 
+                        data={segment.data}
+                        stroke={segment.hasSkipped ? `url(#gradient-${idx})` : "hsl(var(--primary))"} 
+                        strokeWidth={2}
+                        connectNulls={true}
+                        dot={false}
+                        activeDot={false}
+                        isAnimationActive={false}
+                      />
+                    ))}
                     <Line 
                       type="monotone" 
                       dataKey="estimated1RM" 
-                      stroke="hsl(var(--primary))" 
-                      strokeWidth={2}
-                      connectNulls={false}
+                      stroke="transparent"
+                      strokeWidth={0}
+                      connectNulls={true}
                       dot={(props) => {
                         const { cx, cy, payload } = props;
                         if (payload.skipped) {
@@ -212,8 +264,8 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                               cx={cx}
                               cy={cy}
                               r={4}
-                              fill="hsl(var(--muted))"
-                              stroke="hsl(var(--border))"
+                              fill="hsl(0, 70%, 50%)"
+                              stroke="hsl(var(--background))"
                               strokeWidth={2}
                             />
                           );
@@ -239,7 +291,7 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                     <span className="text-muted-foreground">Trained (contributes to progress)</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-muted border-2 border-border" />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'hsl(0, 70%, 50%)' }} />
                     <span className="text-muted-foreground">Skipped (maintains numbering)</span>
                   </div>
                 </div>
