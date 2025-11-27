@@ -98,27 +98,6 @@ export const SessionsList = () => {
     }
   };
 
-  const handleRestart = (session: Session) => {
-    toast({
-      title: "Restart feature",
-      description: "Return to Pomodoro tab to start a new session with this preset",
-    });
-  };
-
-  const handleDuplicate = (session: Session) => {
-    toast({
-      title: "Duplicate feature",
-      description: "Return to Pomodoro tab to create a new session",
-    });
-  };
-
-  const handleModify = (session: Session) => {
-    toast({
-      title: "Modify feature",
-      description: "Preset modification coming soon",
-    });
-  };
-
   if (loading) {
     return (
       <Card className="p-6">
@@ -153,13 +132,7 @@ export const SessionsList = () => {
       
       <div className="space-y-3">
         {sessions.map((session) => (
-          <SessionCard
-            key={session.id}
-            session={session}
-            onRestart={handleRestart}
-            onDuplicate={handleDuplicate}
-            onModify={handleModify}
-          />
+          <SessionCard key={session.id} session={session} />
         ))}
       </div>
     </div>
