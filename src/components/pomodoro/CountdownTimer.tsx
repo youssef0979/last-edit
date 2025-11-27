@@ -8,9 +8,9 @@ import { Play, Pause, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export const CountdownTimer = () => {
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(10);
-  const [seconds, setSeconds] = useState(0);
+  const [hours, setHours] = useState<number | "">(0);
+  const [minutes, setMinutes] = useState<number | "">(0);
+  const [seconds, setSeconds] = useState<number | "">(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [totalTime, setTotalTime] = useState(0);
@@ -64,7 +64,10 @@ export const CountdownTimer = () => {
 
   const handleStart = () => {
     if (timeLeft === 0) {
-      const total = hours * 3600 + minutes * 60 + seconds;
+      const h = hours === "" ? 0 : hours;
+      const m = minutes === "" ? 0 : minutes;
+      const s = seconds === "" ? 0 : seconds;
+      const total = h * 3600 + m * 60 + s;
       if (total === 0) {
         toast({
           title: "Invalid Time",
@@ -119,7 +122,15 @@ export const CountdownTimer = () => {
                 min="0"
                 max="99"
                 value={hours}
-                onChange={(e) => setHours(Math.max(0, parseInt(e.target.value) || 0))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setHours("");
+                  } else {
+                    const num = parseInt(val);
+                    setHours(isNaN(num) ? 0 : Math.max(0, Math.min(99, num)));
+                  }
+                }}
                 disabled={isRunning}
               />
             </div>
@@ -131,7 +142,15 @@ export const CountdownTimer = () => {
                 min="0"
                 max="59"
                 value={minutes}
-                onChange={(e) => setMinutes(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setMinutes("");
+                  } else {
+                    const num = parseInt(val);
+                    setMinutes(isNaN(num) ? 0 : Math.max(0, Math.min(59, num)));
+                  }
+                }}
                 disabled={isRunning}
               />
             </div>
@@ -143,7 +162,15 @@ export const CountdownTimer = () => {
                 min="0"
                 max="59"
                 value={seconds}
-                onChange={(e) => setSeconds(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    setSeconds("");
+                  } else {
+                    const num = parseInt(val);
+                    setSeconds(isNaN(num) ? 0 : Math.max(0, Math.min(59, num)));
+                  }
+                }}
                 disabled={isRunning}
               />
             </div>
