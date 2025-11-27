@@ -1,7 +1,5 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Copy, RotateCcw, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 
 interface Session {
@@ -20,17 +18,9 @@ interface Session {
 
 interface SessionCardProps {
   session: Session;
-  onRestart?: (session: Session) => void;
-  onDuplicate?: (session: Session) => void;
-  onModify?: (session: Session) => void;
 }
 
-export const SessionCard = ({ 
-  session, 
-  onRestart, 
-  onDuplicate, 
-  onModify 
-}: SessionCardProps) => {
+export const SessionCard = ({ session }: SessionCardProps) => {
   const totalSegments = session.work_segments + session.break_segments;
   const workPercentage = totalSegments > 0 
     ? Math.round((session.work_segments / totalSegments) * 100) 
@@ -82,53 +72,9 @@ export const SessionCard = ({
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {session.timer_mode}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                {format(new Date(session.completed_at), "MMM d, h:mm a")}
-              </span>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="flex gap-1">
-              {onRestart && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => onRestart(session)}
-                  title="Restart this session"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                </Button>
-              )}
-              {onDuplicate && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => onDuplicate(session)}
-                  title="Duplicate this session"
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              )}
-              {onModify && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => onModify(session)}
-                  title="Modify preset"
-                >
-                  <Settings2 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
-          </div>
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(session.completed_at), "MMM d, h:mm a")}
+          </span>
         </div>
       </div>
     </Card>
