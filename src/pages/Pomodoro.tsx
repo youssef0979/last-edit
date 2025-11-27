@@ -1,7 +1,8 @@
 import { PomodoroTimer } from "@/components/pomodoro/PomodoroTimer";
 import { CountdownTimer } from "@/components/pomodoro/CountdownTimer";
+import { SessionsList } from "@/components/pomodoro/SessionsList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Timer, Clock } from "lucide-react";
+import { Timer, Clock, List } from "lucide-react";
 
 const Pomodoro = () => {
   return (
@@ -13,19 +14,27 @@ const Pomodoro = () => {
         </div>
 
         <Tabs defaultValue="pomodoro" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8">
+          <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="pomodoro" className="flex items-center gap-2">
               <Timer className="w-4 h-4" />
-              Pomodoro Timer
+              Pomodoro
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="flex items-center gap-2">
+              <List className="w-4 h-4" />
+              My Sessions
             </TabsTrigger>
             <TabsTrigger value="countdown" className="flex items-center gap-2">
               <Clock className="w-4 h-4" />
-              Countdown Timer
+              Countdown
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="pomodoro">
             <PomodoroTimer />
+          </TabsContent>
+
+          <TabsContent value="sessions">
+            <SessionsList />
           </TabsContent>
 
           <TabsContent value="countdown">

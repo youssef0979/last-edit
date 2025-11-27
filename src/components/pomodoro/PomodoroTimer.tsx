@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PomodoroPresetSelector } from "./PomodoroPresetSelector";
 import { SessionHistory } from "./SessionHistory";
+import { SessionStartDialog } from "./SessionStartDialog";
 
 interface PomodoroPreset {
   name: string;
@@ -26,11 +27,14 @@ const PRESETS: PomodoroPreset[] = [
 
 export const PomodoroTimer = () => {
   const [selectedPreset, setSelectedPreset] = useState<PomodoroPreset>(PRESETS[0]);
+  const [sessionName, setSessionName] = useState<string>("");
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
   const [isWork, setIsWork] = useState(true);
   const [timeLeft, setTimeLeft] = useState(selectedPreset.work * 60);
   const [isRunning, setIsRunning] = useState(false);
   const [autoStart, setAutoStart] = useState(true);
   const [sequenceComplete, setSequenceComplete] = useState(false);
+  const [sessionActive, setSessionActive] = useState(false);
   const { toast } = useToast();
   const intervalRef = useRef<NodeJS.Timeout>();
   const audioRef = useRef<HTMLAudioElement>();
@@ -85,9 +89,12 @@ export const PomodoroTimer = () => {
       if (user) {
         await supabase.from("pomodoro_sessions").insert({
           user_id: user.id,
+          session_name: sessionName,
+          cover_image_url: coverImageUrl,
           session_type: isWork ? "work" : "break",
           preset_name: selectedPreset.name,
           duration_minutes: isWork ? selectedPreset.work : selectedPreset.break,
+          status: "completed",
         });
       }
     } catch (error) {
@@ -115,6 +122,16 @@ export const PomodoroTimer = () => {
       setIsWork(true);
       setTimeLeft(selectedPreset.work * 60);
     }
+  };
+
+  const handleSessionStart = (name: string, preset: PomodoroPreset, coverUrl: string | null) => {
+    setSessionName(name);
+    setSelectedPreset(preset);
+    setCoverImageUrl(coverUrl);
+    setTimeLeft(preset.work * 60);
+    setSessionActive(true);
+    setIsWork(true);
+    setSequenceComplete(false);
   };
 
   const handleStart = () => {
@@ -160,15 +177,39 @@ export const PomodoroTimer = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="p-8 bg-card border-border shadow-lg">
-        <div className="space-y-6">
-          {/* Preset Selector */}
-          <PomodoroPresetSelector
-            presets={PRESETS}
-            selectedPreset={selectedPreset}
-            onPresetChange={handlePresetChange}
-            disabled={isRunning}
-          />
+      {!sessionActive ? (
+        <Card className="p-8 bg-card border-border shadow-lg">
+          <div className="text-center space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">Ready to Focus?</h2>
+              <p className="text-muted-foreground">Start a new session to begin tracking your productivity</p>
+            </div>
+            <SessionStartDialog presets={PRESETS} onStart={handleSessionStart}>
+              <Button size="lg" className="gap-2">
+                <Play className="w-5 h-5" />
+                Start New Session
+              </Button>
+            </SessionStartDialog>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-8 bg-card border-border shadow-lg">
+          <div className="space-y-6">
+            {/* Session Info */}
+            {sessionName && (
+              <div className="text-center pb-4 border-b border-border">
+                <h3 className="text-lg font-semibold">{sessionName}</h3>
+                <p className="text-sm text-muted-foreground">{selectedPreset.label} Session</p>
+              </div>
+            )}
+
+            {/* Preset Selector */}
+            <PomodoroPresetSelector
+              presets={PRESETS}
+              selectedPreset={selectedPreset}
+              onPresetChange={handlePresetChange}
+              disabled={isRunning}
+            />
 
           {/* Timer Display */}
           <div className="text-center space-y-4">
@@ -233,6 +274,7 @@ export const PomodoroTimer = () => {
           </div>
         </div>
       </Card>
+      )}
 
       {/* Session History */}
       <SessionHistory />
