@@ -372,42 +372,69 @@ export type Database = {
       }
       pomodoro_sessions: {
         Row: {
+          break_segments: number | null
           completed_at: string
           cover_image_url: string | null
           created_at: string
           duration_minutes: number
           id: string
+          linked_performance_habit_id: string | null
           preset_name: string
           session_name: string | null
           session_type: string
           status: string
+          timer_mode: string | null
           user_id: string
+          work_segments: number | null
         }
         Insert: {
+          break_segments?: number | null
           completed_at?: string
           cover_image_url?: string | null
           created_at?: string
           duration_minutes: number
           id?: string
+          linked_performance_habit_id?: string | null
           preset_name: string
           session_name?: string | null
           session_type: string
           status?: string
+          timer_mode?: string | null
           user_id: string
+          work_segments?: number | null
         }
         Update: {
+          break_segments?: number | null
           completed_at?: string
           cover_image_url?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
+          linked_performance_habit_id?: string | null
           preset_name?: string
           session_name?: string | null
           session_type?: string
           status?: string
+          timer_mode?: string | null
           user_id?: string
+          work_segments?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pomodoro_sessions_linked_performance_habit_id_fkey"
+            columns: ["linked_performance_habit_id"]
+            isOneToOne: false
+            referencedRelation: "performance_habits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pomodoro_sessions_linked_performance_habit_id_fkey"
+            columns: ["linked_performance_habit_id"]
+            isOneToOne: false
+            referencedRelation: "performance_habits_readable"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       privacy_settings: {
         Row: {

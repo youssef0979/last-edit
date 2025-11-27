@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Upload, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -16,9 +18,20 @@ interface PomodoroPreset {
   label: string;
 }
 
+interface PerformanceHabit {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface SessionStartDialogProps {
   presets: PomodoroPreset[];
-  onStart: (sessionName: string, preset: PomodoroPreset, coverUrl: string | null) => void;
+  onStart: (
+    sessionName: string, 
+    preset: PomodoroPreset, 
+    coverUrl: string | null,
+    linkedHabitId: string | null
+  ) => void;
   children: React.ReactNode;
 }
 
@@ -29,7 +42,34 @@ export const SessionStartDialog = ({ presets, onStart, children }: SessionStartD
   const [coverImage, setCoverImage] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [linkToPerformance, setLinkToPerformance] = useState(false);
+  const [selectedHabitId, setSelectedHabitId] = useState<string | null>(null);
+  const [performanceHabits, setPerformanceHabits] = useState<PerformanceHabit[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (linkToPerformance) {
+      fetchPerformanceHabits();
+    }
+  }, [linkToPerformance]);
+
+  const fetchPerformanceHabits = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("performance_habits")
+        .select("id, name, color")
+        .eq("user_id", user.id)
+        .eq("is_active", true);
+
+      if (error) throw error;
+      setPerformanceHabits(data || []);
+    } catch (error) {
+      console.error("Error fetching habits:", error);
+    }
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -96,11 +136,18 @@ export const SessionStartDialog = ({ presets, onStart, children }: SessionStartD
       setUploading(false);
     }
 
-    onStart(sessionName, selectedPreset, coverUrl);
+    onStart(
+      sessionName, 
+      selectedPreset, 
+      coverUrl,
+      linkToPerformance ? selectedHabitId : null
+    );
     setOpen(false);
     setSessionName("");
     setCoverImage(null);
     setCoverPreview(null);
+    setLinkToPerformance(false);
+    setSelectedHabitId(null);
   };
 
   return (
@@ -194,10 +241,57 @@ export const SessionStartDialog = ({ presets, onStart, children }: SessionStartD
             </div>
           </div>
 
+          {/* Performance Tracker Integration */}
+          <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/20">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="link-performance" className="text-sm font-medium">
+                  Link to Performance Tracker
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Track this session's completion in your Performance Tracker
+                </p>
+              </div>
+              <Switch
+                id="link-performance"
+                checked={linkToPerformance}
+                onCheckedChange={setLinkToPerformance}
+              />
+            </div>
+
+            {linkToPerformance && (
+              <div className="space-y-2 pt-2">
+                <Label htmlFor="habit-select" className="text-sm">Select Habit</Label>
+                <Select value={selectedHabitId || ""} onValueChange={setSelectedHabitId}>
+                  <SelectTrigger id="habit-select">
+                    <SelectValue placeholder="Choose a performance habit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {performanceHabits.map((habit) => (
+                      <SelectItem key={habit.id} value={habit.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: habit.color }}
+                          />
+                          {habit.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
           {/* Start Button */}
           <Button
             onClick={handleStart}
-            disabled={uploading || !sessionName.trim()}
+            disabled={
+              uploading || 
+              !sessionName.trim() || 
+              (linkToPerformance && !selectedHabitId)
+            }
             className="w-full gap-2"
             size="lg"
           >
