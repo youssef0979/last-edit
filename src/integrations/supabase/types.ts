@@ -373,29 +373,38 @@ export type Database = {
       pomodoro_sessions: {
         Row: {
           completed_at: string
+          cover_image_url: string | null
           created_at: string
           duration_minutes: number
           id: string
           preset_name: string
+          session_name: string | null
           session_type: string
+          status: string
           user_id: string
         }
         Insert: {
           completed_at?: string
+          cover_image_url?: string | null
           created_at?: string
           duration_minutes: number
           id?: string
           preset_name: string
+          session_name?: string | null
           session_type: string
+          status?: string
           user_id: string
         }
         Update: {
           completed_at?: string
+          cover_image_url?: string | null
           created_at?: string
           duration_minutes?: number
           id?: string
           preset_name?: string
+          session_name?: string | null
           session_type?: string
+          status?: string
           user_id?: string
         }
         Relationships: []
