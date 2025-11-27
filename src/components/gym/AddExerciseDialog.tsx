@@ -22,6 +22,13 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
+  // Pre-select folder if only one is provided
+  useState(() => {
+    if (folders.length === 1 && !folderId) {
+      setFolderId(folders[0].id);
+    }
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -79,22 +86,33 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="folder">Muscle Group (Optional)</Label>
-            <Select value={folderId} onValueChange={setFolderId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a group" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">No Group</SelectItem>
-                {folders.map((folder) => (
-                  <SelectItem key={folder.id} value={folder.id}>
-                    {folder.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {folders.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="folder">Muscle Group (Optional)</Label>
+              <Select value={folderId} onValueChange={setFolderId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No Group</SelectItem>
+                  {folders.map((folder) => (
+                    <SelectItem key={folder.id} value={folder.id}>
+                      {folder.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {folders.length === 1 && (
+            <div className="space-y-2">
+              <Label>Muscle Group</Label>
+              <div className="px-3 py-2 border rounded-md bg-muted text-sm">
+                {folders[0].title}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="muscle">Primary Muscle (Optional)</Label>
