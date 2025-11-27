@@ -195,8 +195,6 @@ export const CountdownTimer = () => {
               {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
             </div>
           </div>
-
-          {isActive && <Progress value={progress} className="h-3" />}
         </div>
 
         {/* Controls */}

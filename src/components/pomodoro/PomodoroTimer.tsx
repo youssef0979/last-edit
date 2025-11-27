@@ -83,8 +83,6 @@ export const PomodoroTimer = () => {
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </div>
             </div>
-
-            <Progress value={progress} className="h-3" />
           </div>
 
           {/* Controls */}
