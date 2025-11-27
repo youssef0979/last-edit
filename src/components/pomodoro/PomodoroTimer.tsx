@@ -35,9 +35,57 @@ export const PomodoroTimer = () => {
   const [autoStart, setAutoStart] = useState(true);
   const [sequenceComplete, setSequenceComplete] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
   const { toast } = useToast();
   const intervalRef = useRef<NodeJS.Timeout>();
   const audioRef = useRef<HTMLAudioElement>();
+
+  // Load persisted state on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('pomodoroState');
+    if (savedState) {
+      try {
+        const state = JSON.parse(savedState);
+        const timePassed = Math.floor((Date.now() - state.lastUpdate) / 1000);
+        
+        if (state.isRunning && state.timeLeft > 0) {
+          const newTimeLeft = Math.max(0, state.timeLeft - timePassed);
+          setTimeLeft(newTimeLeft);
+          setIsRunning(newTimeLeft > 0);
+          setSessionName(state.sessionName);
+          setCoverImageUrl(state.coverImageUrl);
+          setIsWork(state.isWork);
+          setSessionActive(state.sessionActive);
+          setSequenceComplete(state.sequenceComplete);
+          setAutoStart(state.autoStart);
+          
+          const preset = PRESETS.find(p => p.name === state.presetName) || PRESETS[0];
+          setSelectedPreset(preset);
+        }
+      } catch (error) {
+        console.error('Error loading timer state:', error);
+      }
+    }
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (sessionActive) {
+      const state = {
+        timeLeft,
+        isRunning,
+        sessionName,
+        coverImageUrl,
+        isWork,
+        sessionActive,
+        sequenceComplete,
+        autoStart,
+        presetName: selectedPreset.name,
+        lastUpdate: Date.now(),
+      };
+      localStorage.setItem('pomodoroState', JSON.stringify(state));
+    }
+  }, [timeLeft, isRunning, sessionName, coverImageUrl, isWork, sessionActive, sequenceComplete, autoStart, selectedPreset]);
 
   useEffect(() => {
     // Initialize notification audio
@@ -132,6 +180,12 @@ export const PomodoroTimer = () => {
     setSessionActive(true);
     setIsWork(true);
     setSequenceComplete(false);
+    setIsRunning(true);
+    
+    // Request notification permission
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
   };
 
   const handleStart = () => {
@@ -155,6 +209,10 @@ export const PomodoroTimer = () => {
     setIsWork(true);
     setSequenceComplete(false);
     setTimeLeft(selectedPreset.work * 60);
+    setSessionActive(false);
+    setSessionName("");
+    setCoverImageUrl(null);
+    localStorage.removeItem('pomodoroState');
   };
 
   const handlePresetChange = (preset: PomodoroPreset) => {
@@ -168,6 +226,7 @@ export const PomodoroTimer = () => {
     setIsWork(true);
     setTimeLeft(selectedPreset.work * 60);
     setIsRunning(true);
+    localStorage.removeItem('pomodoroState');
   };
 
   const minutes = Math.floor(timeLeft / 60);

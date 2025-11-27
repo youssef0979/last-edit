@@ -23,6 +23,26 @@ export const SessionsList = () => {
 
   useEffect(() => {
     fetchSessions();
+    
+    // Set up real-time subscription for new sessions
+    const channel = supabase
+      .channel('pomodoro_sessions_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'pomodoro_sessions'
+        },
+        () => {
+          fetchSessions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSessions = async () => {
