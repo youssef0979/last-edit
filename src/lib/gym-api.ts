@@ -60,6 +60,7 @@ export interface ExerciseStats {
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 // Folders API
 export async function getFolders(): Promise<ExerciseFolder[]> {
@@ -69,6 +70,7 @@ export async function getFolders(): Promise<ExerciseFolder[]> {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/gym-folders`, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -88,6 +90,7 @@ export async function createFolder(title: string): Promise<ExerciseFolder> {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ title }),
@@ -109,6 +112,7 @@ export async function updateFolder(id: string, title: string): Promise<ExerciseF
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ title }),
@@ -130,6 +134,7 @@ export async function deleteFolder(id: string): Promise<void> {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -151,6 +156,7 @@ export async function getExercises(folderId?: string | null): Promise<Exercise[]
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -175,6 +181,7 @@ export async function createExercise(exercise: {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(exercise),
@@ -204,6 +211,7 @@ export async function updateExercise(
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(exercise),
@@ -225,6 +233,7 @@ export async function deleteExercise(id: string): Promise<void> {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -255,6 +264,7 @@ export async function getSessions(params?: {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -278,6 +288,7 @@ export async function createSession(sessionData: {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(sessionData),
@@ -305,6 +316,7 @@ export async function updateSession(
     method: 'PUT',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(updates),
@@ -326,6 +338,7 @@ export async function deleteSession(id: string): Promise<void> {
     method: 'DELETE',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -343,6 +356,7 @@ export async function getSessionSets(sessionId: string): Promise<SetEntry[]> {
   const response = await fetch(`${SUPABASE_URL}/functions/v1/gym-sets/${sessionId}`, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -371,6 +385,7 @@ export async function addSet(
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(setData),
@@ -392,6 +407,7 @@ export async function getExerciseStats(exerciseId: string): Promise<ExerciseStat
   const response = await fetch(`${SUPABASE_URL}/functions/v1/gym-stats/${exerciseId}`, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
@@ -424,6 +440,7 @@ export async function exportData(params?: {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
     },
   });
 
