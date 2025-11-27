@@ -48,8 +48,8 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <GlobalMiniWidget />
           <BrowserRouter>
+            <GlobalMiniWidget />
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Layout><Dashboard /></Layout>} />
