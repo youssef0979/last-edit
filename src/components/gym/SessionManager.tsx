@@ -9,6 +9,7 @@ import { CreateSessionDialog } from "./CreateSessionDialog";
 import { SessionDetailDialog } from "./SessionDetailDialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface SessionManagerProps {
   exercises: any[];
@@ -198,21 +199,37 @@ export function SessionManager({ exercises }: SessionManagerProps) {
           return (
             <Card 
               key={session.id} 
-              className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className={cn(
+                "p-4 transition-shadow",
+                session.status === 'skipped' 
+                  ? "opacity-60 cursor-not-allowed bg-muted/30" 
+                  : "hover:shadow-md cursor-pointer"
+              )}
               onClick={() => session.status !== 'skipped' && setSelectedSession(session)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
+                    {session.status === 'skipped' ? (
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <Calendar className="h-5 w-5 text-muted-foreground" />
+                    )}
                     <div>
                       <h3 className="font-semibold">
                         Session {session.session_index}
-                        {session.status === 'skipped' && ' (Skipped)'}
+                        {session.status === 'skipped' && (
+                          <span className="text-muted-foreground font-normal"> - Skipped</span>
+                        )}
                       </h3>
                       {session.scheduled_date && session.status !== 'skipped' && (
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(session.scheduled_date), 'PPP')}
+                        </p>
+                      )}
+                      {session.status === 'skipped' && (
+                        <p className="text-xs text-muted-foreground">
+                          Session maintained in numbering sequence
                         </p>
                       )}
                       {sessionSetsQuery.data && session.status !== 'skipped' && (
