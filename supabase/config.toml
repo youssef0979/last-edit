@@ -1,1 +1,19 @@
 project_id = "zbqlkeldejppkuqzgmfz"
+
+[functions.gym-folders]
+verify_jwt = true
+
+[functions.gym-exercises]
+verify_jwt = true
+
+[functions.gym-sessions]
+verify_jwt = true
+
+[functions.gym-sets]
+verify_jwt = true
+
+[functions.gym-stats]
+verify_jwt = true
+
+[functions.gym-export]
+verify_jwt = true
