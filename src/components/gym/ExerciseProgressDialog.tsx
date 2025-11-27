@@ -158,6 +158,9 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
             <div className="space-y-4">
               <Card className="p-4">
                 <h3 className="font-semibold mb-4">Strength Progress (Session by Session)</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Each point represents the best set from that training session. Skipped sessions appear as neutral placeholders to maintain consistent numbering.
+                </p>
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -233,11 +236,11 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
                 <div className="flex items-center justify-center gap-6 mt-4 text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-primary" />
-                    <span className="text-muted-foreground">Completed</span>
+                    <span className="text-muted-foreground">Trained (contributes to progress)</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-muted border-2 border-border" />
-                    <span className="text-muted-foreground">Skipped</span>
+                    <span className="text-muted-foreground">Skipped (maintains numbering)</span>
                   </div>
                 </div>
               </Card>
