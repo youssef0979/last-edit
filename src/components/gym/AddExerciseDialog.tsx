@@ -73,6 +73,11 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Exercise</DialogTitle>
+          {folders.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              This will create a standalone exercise
+            </p>
+          )}
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

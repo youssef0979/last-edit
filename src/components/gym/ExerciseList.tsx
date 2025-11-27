@@ -19,63 +19,96 @@ export function ExerciseList({ exercises, folders, onUpdate }: ExerciseListProps
   const [progressExercise, setProgressExercise] = useState<any>(null);
 
   const getFolderName = (folderId: string | null) => {
-    if (!folderId) return "No Group";
+    if (!folderId) return null;
     return folders.find(f => f.id === folderId)?.title || "Unknown";
   };
 
+  const standaloneExercises = exercises.filter(e => !e.folder_id);
+  const groupedExercises = exercises.filter(e => e.folder_id);
+
+  const renderExerciseCard = (exercise: any) => (
+    <Card key={exercise.id} className="p-4 hover:shadow-md transition-shadow">
+      <div className="space-y-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2">
+              <Dumbbell className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="font-semibold">{exercise.name}</h3>
+              {exercise.folder_id && (
+                <p className="text-xs text-muted-foreground">{getFolderName(exercise.folder_id)}</p>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {exercise.primary_muscle && (
+            <Badge variant="secondary">{exercise.primary_muscle}</Badge>
+          )}
+          <Badge variant="outline">{exercise.unit}</Badge>
+        </div>
+
+        <div className="flex gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 gap-2"
+            onClick={() => setProgressExercise(exercise)}
+          >
+            <TrendingUp className="h-4 w-4" />
+            Progress
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setEditExercise(exercise)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDeleteExercise(exercise)}
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {exercises.map((exercise) => (
-          <Card key={exercise.id} className="p-4 hover:shadow-md transition-shadow">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2">
-                    <Dumbbell className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">{exercise.name}</h3>
-                    <p className="text-xs text-muted-foreground">{getFolderName(exercise.folder_id)}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {exercise.primary_muscle && (
-                  <Badge variant="secondary">{exercise.primary_muscle}</Badge>
-                )}
-                <Badge variant="outline">{exercise.unit}</Badge>
-              </div>
-
-              <div className="flex gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1 gap-2"
-                  onClick={() => setProgressExercise(exercise)}
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  Progress
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setEditExercise(exercise)}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setDeleteExercise(exercise)}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
+      <div className="space-y-8">
+        {standaloneExercises.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">Standalone Exercises</h3>
+              <p className="text-sm text-muted-foreground">
+                {standaloneExercises.length} exercise{standaloneExercises.length !== 1 ? 's' : ''} not in any muscle group
+              </p>
             </div>
-          </Card>
-        ))}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {standaloneExercises.map(renderExerciseCard)}
+            </div>
+          </div>
+        )}
+
+        {groupedExercises.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold">In Muscle Groups</h3>
+              <p className="text-sm text-muted-foreground">
+                {groupedExercises.length} exercise{groupedExercises.length !== 1 ? 's' : ''} organized by muscle group
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {groupedExercises.map(renderExerciseCard)}
+            </div>
+          </div>
+        )}
       </div>
 
       {exercises.length === 0 && (

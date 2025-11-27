@@ -58,6 +58,9 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{exercise.name} - Progress</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Independent tracking for this exercise
+          </p>
         </DialogHeader>
 
         <div className="space-y-6">
