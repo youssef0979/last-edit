@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Play, Pause, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ProgressRing } from "./ProgressRing";
 
 export const CountdownTimer = () => {
   const [hours, setHours] = useState<number | "">(0);
@@ -187,9 +188,12 @@ export const CountdownTimer = () => {
             </div>
           )}
           
-          <div className="text-7xl font-bold text-foreground tabular-nums">
-            {displayHours > 0 && <>{String(displayHours).padStart(2, "0")}:</>}
-            {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
+          <div className="flex items-center justify-center gap-8">
+            {isActive && <ProgressRing progress={progress} size={150} strokeWidth={10} />}
+            <div className="text-7xl font-bold text-foreground tabular-nums">
+              {displayHours > 0 && <>{String(displayHours).padStart(2, "0")}:</>}
+              {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
+            </div>
           </div>
 
           {isActive && <Progress value={progress} className="h-3" />}
