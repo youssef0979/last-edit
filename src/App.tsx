@@ -13,6 +13,7 @@ import CalendarPage from "./pages/CalendarPage";
 import Profile from "./pages/Profile";
 import Friends from "./pages/Friends";
 import FriendProfile from "./pages/FriendProfile";
+import Pomodoro from "./pages/Pomodoro";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminContent from "./pages/admin/AdminContent";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/profile" element={<Layout><Profile /></Layout>} />
             <Route path="/friends" element={<Layout><Friends /></Layout>} />
             <Route path="/friends/:friendId" element={<Layout><FriendProfile /></Layout>} />
+            <Route path="/pomodoro" element={<Layout><Pomodoro /></Layout>} />
             <Route path="/admin" element={<AdminUsers />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/admin/content" element={<AdminContent />} />
