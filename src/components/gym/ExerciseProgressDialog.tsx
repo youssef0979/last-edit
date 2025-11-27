@@ -130,7 +130,7 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{exercise.name} - Progress</DialogTitle>
+          <DialogTitle>{exercise?.name ?? "Exercise"} - Progress</DialogTitle>
           <p className="text-sm text-muted-foreground">
             Tracking best set per session using Epley 1RM formula
           </p>
@@ -145,11 +145,11 @@ export function ExerciseProgressDialog({ exercise, open, onOpenChange }: Exercis
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Est. 1RM</p>
-                <p className="text-2xl font-bold">{stats.estimated_1rm?.toFixed(1) || 0} {exercise.unit}</p>
+                <p className="text-2xl font-bold">{stats.estimated_1rm?.toFixed(1) || 0} {exercise?.unit ?? ""}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Best Set</p>
-                <p className="text-2xl font-bold">{stats.last_best_set_value?.toFixed(1) || 0} {exercise.unit}</p>
+                <p className="text-2xl font-bold">{stats.last_best_set_value?.toFixed(1) || 0} {exercise?.unit ?? ""}</p>
               </Card>
             </div>
           )}
