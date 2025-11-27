@@ -43,7 +43,7 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
         .insert({
           name: name.trim(),
           user_id: user.id,
-          folder_id: folderId || null,
+          folder_id: folderId && folderId !== "none" ? folderId : null,
           primary_muscle: primaryMuscle || null,
           unit,
         });
@@ -99,7 +99,7 @@ export function AddExerciseDialog({ open, onOpenChange, folders, onSuccess }: Ad
                   <SelectValue placeholder="Select a group" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No Group</SelectItem>
+                  <SelectItem value="none">No Group</SelectItem>
                   {folders.map((folder) => (
                     <SelectItem key={folder.id} value={folder.id}>
                       {folder.title}
