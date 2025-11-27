@@ -78,7 +78,7 @@ export const PomodoroTimer = () => {
             </div>
             
             <div className="flex items-center justify-center gap-8">
-              <ProgressRing progress={progress} size={150} strokeWidth={10} />
+              <ProgressRing progress={progress} size={150} strokeWidth={10} showPercentage />
               <div className="text-7xl font-bold text-foreground tabular-nums">
                 {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
               </div>
