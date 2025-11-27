@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { UnitConversionWarning } from "./UnitConversionWarning";
 
 interface EditExerciseDialogProps {
   exercise: any;
@@ -21,6 +22,7 @@ export function EditExerciseDialog({ exercise, folders, open, onOpenChange, onSu
   const [primaryMuscle, setPrimaryMuscle] = useState("");
   const [unit, setUnit] = useState<"kg" | "lbs">("kg");
   const [loading, setLoading] = useState(false);
+  const [setCount, setSetCount] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -29,6 +31,19 @@ export function EditExerciseDialog({ exercise, folders, open, onOpenChange, onSu
       setFolderId(exercise.folder_id || "");
       setPrimaryMuscle(exercise.primary_muscle || "");
       setUnit(exercise.unit);
+      
+      // Count historical sets
+      const fetchSetCount = async () => {
+        const { count, error } = await supabase
+          .from('set_entries')
+          .select('*', { count: 'exact', head: true })
+          .eq('exercise_id', exercise.id);
+        
+        if (!error && count !== null) {
+          setSetCount(count);
+        }
+      };
+      fetchSetCount();
     }
   }, [exercise]);
 
@@ -38,6 +53,42 @@ export function EditExerciseDialog({ exercise, folders, open, onOpenChange, onSu
 
     setLoading(true);
     try {
+      const unitChanged = exercise.unit !== unit;
+      
+      // If unit changed, convert all historical sets
+      if (unitChanged) {
+        const conversionFactor = unit === 'kg' ? 1 / 2.20462 : 2.20462; // lbs to kg or kg to lbs
+        
+        const { data: sets, error: fetchError } = await supabase
+          .from('set_entries')
+          .select('id, weight')
+          .eq('exercise_id', exercise.id);
+
+        if (fetchError) throw fetchError;
+
+        if (sets && sets.length > 0) {
+          const updates = sets.map(set => ({
+            id: set.id,
+            weight: parseFloat((set.weight * conversionFactor).toFixed(2)),
+            unit: unit
+          }));
+
+          for (const update of updates) {
+            const { error: updateError } = await supabase
+              .from('set_entries')
+              .update({ weight: update.weight, unit: update.unit })
+              .eq('id', update.id);
+
+            if (updateError) throw updateError;
+          }
+
+          toast({ 
+            title: "Unit converted", 
+            description: `Updated ${sets.length} historical sets to ${unit}.`
+          });
+        }
+      }
+
       const { error } = await supabase
         .from('exercises')
         .update({
@@ -119,6 +170,14 @@ export function EditExerciseDialog({ exercise, folders, open, onOpenChange, onSu
               </SelectContent>
             </Select>
           </div>
+
+          {exercise && exercise.unit !== unit && setCount > 0 && (
+            <UnitConversionWarning 
+              fromUnit={exercise.unit}
+              toUnit={unit}
+              setCount={setCount}
+            />
+          )}
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
