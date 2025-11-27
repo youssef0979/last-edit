@@ -17,6 +17,7 @@ interface Session {
   work_segments: number;
   break_segments: number;
   timer_mode: string;
+  linked_performance_habit_id: string | null;
 }
 
 export const SessionsList = () => {
@@ -58,39 +59,11 @@ export const SessionsList = () => {
         .select("*")
         .eq("user_id", user.id)
         .order("completed_at", { ascending: false })
-        .limit(20);
+        .limit(50);
 
       if (error) throw error;
 
-      // Group sessions by name and aggregate
-      const sessionMap = new Map<string, Session>();
-      
-      data?.forEach((session) => {
-        const key = session.session_name || `Unnamed-${session.id}`;
-        if (!sessionMap.has(key)) {
-          sessionMap.set(key, {
-            id: session.id,
-            session_name: session.session_name,
-            session_type: session.session_type,
-            preset_name: session.preset_name,
-            duration_minutes: session.duration_minutes,
-            status: session.status,
-            cover_image_url: session.cover_image_url,
-            completed_at: session.completed_at,
-            work_segments: session.work_segments || 0,
-            break_segments: session.break_segments || 0,
-            timer_mode: session.timer_mode || "normal",
-          });
-        } else {
-          // Aggregate duration and segments for same session
-          const existing = sessionMap.get(key)!;
-          existing.duration_minutes += session.duration_minutes;
-          existing.work_segments += session.work_segments || 0;
-          existing.break_segments += session.break_segments || 0;
-        }
-      });
-
-      setSessions(Array.from(sessionMap.values()));
+      setSessions(data || []);
     } catch (error) {
       console.error("Error fetching sessions:", error);
     } finally {
@@ -124,15 +97,19 @@ export const SessionsList = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">My Focus Sessions</h2>
+        <h2 className="text-2xl font-bold">Session History</h2>
         <p className="text-sm text-muted-foreground">
-          {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+          {sessions.length} session{sessions.length !== 1 ? 's' : ''} logged
         </p>
       </div>
       
-      <div className="space-y-3">
+      <div className="grid gap-3">
         {sessions.map((session) => (
-          <SessionCard key={session.id} session={session} />
+          <SessionCard 
+            key={session.id} 
+            session={session}
+            onDelete={fetchSessions}
+          />
         ))}
       </div>
     </div>

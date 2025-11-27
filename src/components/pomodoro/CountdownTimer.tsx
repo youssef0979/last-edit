@@ -103,6 +103,11 @@ export const CountdownTimer = () => {
   return (
     <Card className="p-8 bg-card border-border shadow-lg">
       <div className="space-y-6">
+        <div className="text-center pb-4 border-b border-border">
+          <h3 className="text-lg font-semibold">Countdown Timer</h3>
+          <p className="text-sm text-muted-foreground">Set a custom timer for any duration</p>
+        </div>
+
         {/* Input Section */}
         {!isActive && (
           <div className="grid grid-cols-3 gap-4">
@@ -147,7 +152,15 @@ export const CountdownTimer = () => {
 
         {/* Timer Display */}
         <div className="text-center space-y-4">
-          <div className="text-8xl font-bold text-foreground tabular-nums">
+          {isActive && (
+            <div className="inline-block px-4 py-2 rounded-lg bg-accent/20 border border-accent">
+              <p className="text-sm font-medium text-muted-foreground">
+                Countdown in Progress
+              </p>
+            </div>
+          )}
+          
+          <div className="text-7xl font-bold text-foreground tabular-nums">
             {displayHours > 0 && <>{String(displayHours).padStart(2, "0")}:</>}
             {String(displayMinutes).padStart(2, "0")}:{String(displaySeconds).padStart(2, "0")}
           </div>
