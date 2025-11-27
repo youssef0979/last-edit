@@ -4,12 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Play, Pause, RotateCcw, Volume2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Play, Pause, RotateCcw, Volume2, Focus, Bell, BellOff, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PomodoroPresetSelector } from "./PomodoroPresetSelector";
 import { SessionHistory } from "./SessionHistory";
 import { SessionStartDialog } from "./SessionStartDialog";
+import { ProgressRing } from "./ProgressRing";
+import { MiniTimerWidget } from "./MiniTimerWidget";
 
 interface PomodoroPreset {
   name: string;
@@ -25,10 +28,13 @@ const PRESETS: PomodoroPreset[] = [
   { name: "90+15", work: 90, break: 15, label: "Deep Work" },
 ];
 
+type TimerMode = "normal" | "focus" | "silent";
+
 export const PomodoroTimer = () => {
   const [selectedPreset, setSelectedPreset] = useState<PomodoroPreset>(PRESETS[0]);
   const [sessionName, setSessionName] = useState<string>("");
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+  const [linkedHabitId, setLinkedHabitId] = useState<string | null>(null);
   const [isWork, setIsWork] = useState(true);
   const [timeLeft, setTimeLeft] = useState(selectedPreset.work * 60);
   const [isRunning, setIsRunning] = useState(false);
@@ -36,6 +42,10 @@ export const PomodoroTimer = () => {
   const [sequenceComplete, setSequenceComplete] = useState(false);
   const [sessionActive, setSessionActive] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
+  const [timerMode, setTimerMode] = useState<TimerMode>("normal");
+  const [workSegments, setWorkSegments] = useState(0);
+  const [breakSegments, setBreakSegments] = useState(0);
+  const [showMiniWidget, setShowMiniWidget] = useState(false);
   const { toast } = useToast();
   const intervalRef = useRef<NodeJS.Timeout>();
   const audioRef = useRef<HTMLAudioElement>();
@@ -115,11 +125,20 @@ export const PomodoroTimer = () => {
   const handleTimerComplete = async () => {
     setIsRunning(false);
     
-    // Play audio notification
-    audioRef.current?.play().catch(console.error);
+    // Update segment counters
+    if (isWork) {
+      setWorkSegments(prev => prev + 1);
+    } else {
+      setBreakSegments(prev => prev + 1);
+    }
+    
+    // Play audio notification (unless silent mode)
+    if (timerMode !== "silent") {
+      audioRef.current?.play().catch(console.error);
+    }
 
-    // Show browser notification
-    if ("Notification" in window && Notification.permission === "granted") {
+    // Show browser notification (unless focus mode)
+    if (timerMode !== "focus" && "Notification" in window && Notification.permission === "granted") {
       new Notification(
         isWork ? "Work session complete!" : "Break session complete!",
         {
@@ -143,46 +162,70 @@ export const PomodoroTimer = () => {
           preset_name: selectedPreset.name,
           duration_minutes: isWork ? selectedPreset.work : selectedPreset.break,
           status: "completed",
+          timer_mode: timerMode,
+          work_segments: isWork ? workSegments + 1 : workSegments,
+          break_segments: !isWork ? breakSegments + 1 : breakSegments,
+          linked_performance_habit_id: linkedHabitId,
         });
+
+        // Update performance tracker if linked
+        if (linkedHabitId && isWork) {
+          const today = new Date().toISOString().split('T')[0];
+          await supabase.from("performance_scores").upsert({
+            user_id: user.id,
+            performance_habit_id: linkedHabitId,
+            date: today,
+            score: 10, // Full score for completed Pomodoro
+          }, {
+            onConflict: 'user_id,performance_habit_id,date'
+          });
+        }
       }
     } catch (error) {
       console.error("Error saving session:", error);
     }
 
-    toast({
-      title: isWork ? "Work session complete!" : "Break complete!",
-      description: isWork 
-        ? `Time for a ${selectedPreset.break} minute break` 
-        : "Ready for another work session?",
-    });
+    if (timerMode !== "focus") {
+      toast({
+        title: isWork ? "Work session complete!" : "Break complete!",
+        description: isWork 
+          ? `Time for a ${selectedPreset.break} minute break` 
+          : "Ready for another work session?",
+      });
+    }
 
     // Handle sequence progression
     if (isWork) {
-      // Switch to break
       setIsWork(false);
       setTimeLeft(selectedPreset.break * 60);
       if (autoStart) {
         setTimeout(() => setIsRunning(true), 1000);
       }
     } else {
-      // Sequence complete - both work and break done
       setSequenceComplete(true);
       setIsWork(true);
       setTimeLeft(selectedPreset.work * 60);
     }
   };
 
-  const handleSessionStart = (name: string, preset: PomodoroPreset, coverUrl: string | null) => {
+  const handleSessionStart = (
+    name: string, 
+    preset: PomodoroPreset, 
+    coverUrl: string | null,
+    habitId: string | null
+  ) => {
     setSessionName(name);
     setSelectedPreset(preset);
     setCoverImageUrl(coverUrl);
+    setLinkedHabitId(habitId);
     setTimeLeft(preset.work * 60);
     setSessionActive(true);
     setIsWork(true);
     setSequenceComplete(false);
+    setWorkSegments(0);
+    setBreakSegments(0);
     setIsRunning(true);
     
-    // Request notification permission
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
@@ -212,6 +255,9 @@ export const PomodoroTimer = () => {
     setSessionActive(false);
     setSessionName("");
     setCoverImageUrl(null);
+    setLinkedHabitId(null);
+    setWorkSegments(0);
+    setBreakSegments(0);
     localStorage.removeItem('pomodoroState');
   };
 
@@ -234,8 +280,25 @@ export const PomodoroTimer = () => {
   const totalTime = isWork ? selectedPreset.work * 60 : selectedPreset.break * 60;
   const progress = ((totalTime - timeLeft) / totalTime) * 100;
 
+  const timerModeIcons = {
+    normal: <Bell className="w-4 h-4" />,
+    focus: <Focus className="w-4 h-4" />,
+    silent: <BellOff className="w-4 h-4" />
+  };
+
   return (
     <div className="space-y-6">
+      {/* Mini Widget */}
+      {showMiniWidget && sessionActive && isRunning && (
+        <MiniTimerWidget
+          timeLeft={timeLeft}
+          totalTime={isWork ? selectedPreset.work * 60 : selectedPreset.break * 60}
+          isWork={isWork}
+          sessionName={sessionName}
+          onClose={() => setShowMiniWidget(false)}
+        />
+      )}
+
       {!sessionActive ? (
         <Card className="p-8 bg-card border-border shadow-lg">
           <div className="text-center space-y-6">
@@ -270,6 +333,22 @@ export const PomodoroTimer = () => {
               disabled={isRunning}
             />
 
+          {/* Timer Mode Selector */}
+          <div className="flex items-center justify-center gap-2">
+            {(["normal", "focus", "silent"] as TimerMode[]).map((mode) => (
+              <Button
+                key={mode}
+                size="sm"
+                variant={timerMode === mode ? "default" : "outline"}
+                onClick={() => setTimerMode(mode)}
+                className="gap-2 capitalize"
+              >
+                {timerModeIcons[mode]}
+                {mode}
+              </Button>
+            ))}
+          </div>
+
           {/* Timer Display */}
           <div className="text-center space-y-4">
             <div className="inline-block px-4 py-2 rounded-lg bg-accent/20 border border-accent">
@@ -278,11 +357,22 @@ export const PomodoroTimer = () => {
               </p>
             </div>
             
-            <div className="text-8xl font-bold text-foreground tabular-nums">
-              {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+            <div className="flex items-center justify-center gap-8">
+              <ProgressRing progress={progress} size={150} strokeWidth={10} />
+              <div className="text-7xl font-bold text-foreground tabular-nums">
+                {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
+              </div>
             </div>
 
             <Progress value={progress} className="h-3" />
+
+            {/* Session Breakdown */}
+            {(workSegments > 0 || breakSegments > 0) && (
+              <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                <Badge variant="secondary">Work: {workSegments}</Badge>
+                <Badge variant="outline">Break: {breakSegments}</Badge>
+              </div>
+            )}
           </div>
 
           {/* Sequence Complete UI */}
@@ -317,6 +407,17 @@ export const PomodoroTimer = () => {
               <RotateCcw className="w-5 h-5" />
               Reset
             </Button>
+            {isRunning && !showMiniWidget && (
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="gap-2"
+                onClick={() => setShowMiniWidget(true)}
+              >
+                <Minimize2 className="w-5 h-5" />
+                Minimize
+              </Button>
+            )}
           </div>
 
           {/* Auto-continue Toggle */}

@@ -1,25 +1,28 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-import { Clock, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SessionCard } from "./SessionCard";
+import { useToast } from "@/hooks/use-toast";
 
 interface Session {
   id: string;
   session_name: string | null;
+  cover_image_url: string | null;
   session_type: string;
   preset_name: string;
   duration_minutes: number;
   status: string;
-  cover_image_url: string | null;
   completed_at: string;
+  work_segments: number;
+  break_segments: number;
+  timer_mode: string;
 }
 
 export const SessionsList = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSessions();
@@ -74,11 +77,16 @@ export const SessionsList = () => {
             status: session.status,
             cover_image_url: session.cover_image_url,
             completed_at: session.completed_at,
+            work_segments: session.work_segments || 0,
+            break_segments: session.break_segments || 0,
+            timer_mode: session.timer_mode || "normal",
           });
         } else {
-          // Aggregate duration for same session
+          // Aggregate duration and segments for same session
           const existing = sessionMap.get(key)!;
           existing.duration_minutes += session.duration_minutes;
+          existing.work_segments += session.work_segments || 0;
+          existing.break_segments += session.break_segments || 0;
         }
       });
 
@@ -90,21 +98,25 @@ export const SessionsList = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle2 className="w-4 h-4 text-green-500" />;
-      case "ongoing":
-        return <Clock className="w-4 h-4 text-blue-500" />;
-      case "abandoned":
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Clock className="w-4 h-4 text-muted-foreground" />;
-    }
+  const handleRestart = (session: Session) => {
+    toast({
+      title: "Restart feature",
+      description: "Return to Pomodoro tab to start a new session with this preset",
+    });
   };
 
-  const getStatusLabel = (status: string) => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
+  const handleDuplicate = (session: Session) => {
+    toast({
+      title: "Duplicate feature",
+      description: "Return to Pomodoro tab to create a new session",
+    });
+  };
+
+  const handleModify = (session: Session) => {
+    toast({
+      title: "Modify feature",
+      description: "Preset modification coming soon",
+    });
   };
 
   if (loading) {
@@ -113,7 +125,7 @@ export const SessionsList = () => {
         <h3 className="text-lg font-semibold mb-4">My Focus Sessions</h3>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full" />
+            <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
       </Card>
@@ -122,69 +134,34 @@ export const SessionsList = () => {
 
   if (sessions.length === 0) {
     return (
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">My Focus Sessions</h3>
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No sessions yet. Start your first focus session to see it here!
+      <Card className="p-8">
+        <p className="text-center text-muted-foreground">
+          No sessions yet. Start your first Pomodoro session to see it here!
         </p>
       </Card>
     );
   }
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">My Focus Sessions</h3>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">My Focus Sessions</h2>
+        <p className="text-sm text-muted-foreground">
+          {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+        </p>
+      </div>
+      
       <div className="space-y-3">
         {sessions.map((session) => (
-          <div
+          <SessionCard
             key={session.id}
-            className="flex gap-4 p-4 rounded-lg bg-accent/10 border border-border hover:border-accent transition-colors"
-          >
-            {/* Cover Image */}
-            <div className="flex-shrink-0">
-              {session.cover_image_url ? (
-                <img
-                  src={session.cover_image_url}
-                  alt={session.session_name || "Session"}
-                  className="w-20 h-20 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                </div>
-              )}
-            </div>
-
-            {/* Session Info */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <h4 className="font-semibold text-sm truncate">
-                  {session.session_name || "Unnamed Session"}
-                </h4>
-                <div className="flex items-center gap-1 flex-shrink-0">
-                  {getStatusIcon(session.status)}
-                  <span className="text-xs text-muted-foreground">
-                    {getStatusLabel(session.status)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <Badge variant="outline" className="font-mono">
-                  {session.preset_name}
-                </Badge>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {session.duration_minutes} min
-                </span>
-                <span>•</span>
-                <span>{format(new Date(session.completed_at), "MMM d, h:mm a")}</span>
-              </div>
-            </div>
-          </div>
+            session={session}
+            onRestart={handleRestart}
+            onDuplicate={handleDuplicate}
+            onModify={handleModify}
+          />
         ))}
       </div>
-    </Card>
+    </div>
   );
 };
