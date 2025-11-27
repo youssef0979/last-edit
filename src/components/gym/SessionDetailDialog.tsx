@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Dumbbell, Trash2 } from "lucide-react";
+import { Plus, Dumbbell, Trash2, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddSetDialog } from "./AddSetDialog";
+import { ExerciseProgressDialog } from "./ExerciseProgressDialog";
 
 interface SessionDetailDialogProps {
   session: any;
@@ -19,7 +20,14 @@ interface SessionDetailDialogProps {
 
 export function SessionDetailDialog({ session, exercises, open, onOpenChange, onUpdate }: SessionDetailDialogProps) {
   const [addSetOpen, setAddSetOpen] = useState(false);
+  const [progressDialogExercise, setProgressDialogExercise] = useState<any>(null);
   const { toast } = useToast();
+
+  // Epley formula to calculate estimated 1RM
+  const calculateEpley1RM = (weight: number, reps: number) => {
+    if (reps === 1) return weight;
+    return weight * (1 + reps / 30);
+  };
 
   const { data: sets, refetch: refetchSets } = useQuery({
     queryKey: ['session-sets', session?.id],
@@ -38,7 +46,7 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
     }
   });
 
-  // Group sets by exercise
+  // Group sets by exercise and calculate best set
   const setsByExercise = sets?.reduce((acc: Record<string, any[]>, set) => {
     if (!acc[set.exercise_id]) {
       acc[set.exercise_id] = [];
@@ -49,10 +57,22 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
 
   const exercisesInSession = Object.keys(setsByExercise).map(exerciseId => {
     const exercise = exercises.find(e => e.id === exerciseId);
+    const exerciseSets = setsByExercise[exerciseId];
+    
+    // Calculate best set using Epley formula
+    const setsWithEstimate = exerciseSets.map(set => ({
+      ...set,
+      estimated1RM: calculateEpley1RM(set.weight, set.reps)
+    }));
+    const bestSet = setsWithEstimate.reduce((best, current) => 
+      current.estimated1RM > best.estimated1RM ? current : best
+    );
+    
     return {
       exercise,
-      sets: setsByExercise[exerciseId],
-      totalVolume: setsByExercise[exerciseId].reduce((sum, set) => sum + (set.weight * set.reps), 0)
+      sets: exerciseSets,
+      bestSet,
+      totalVolume: exerciseSets.reduce((sum, set) => sum + (set.weight * set.reps), 0)
     };
   });
 
@@ -123,22 +143,35 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
 
             {exercisesInSession.length > 0 ? (
               <div className="space-y-4">
-                {exercisesInSession.map(({ exercise, sets: exerciseSets, totalVolume }) => (
+                {exercisesInSession.map(({ exercise, sets: exerciseSets, bestSet, totalVolume }) => (
                   <Card key={exercise?.id} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-1">
                           <div className="rounded-lg bg-primary/10 p-2">
                             <Dumbbell className="h-4 w-4 text-primary" />
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-semibold">{exercise?.name || 'Unknown'}</h3>
                             <p className="text-xs text-muted-foreground">
                               {exerciseSets.length} set{exerciseSets.length !== 1 ? 's' : ''} • {totalVolume.toFixed(0)} {exercise?.unit} total volume
                             </p>
+                            <p className="text-xs font-medium text-primary mt-1">
+                              Best Set: {bestSet.weight} {exercise?.unit} × {bestSet.reps} reps (Est. 1RM: {calculateEpley1RM(bestSet.weight, bestSet.reps).toFixed(1)} {exercise?.unit})
+                            </p>
                           </div>
                         </div>
-                        <Badge variant="outline">{exercise?.unit}</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">{exercise?.unit}</Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setProgressDialogExercise(exercise)}
+                            className="gap-1"
+                          >
+                            <TrendingUp className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                       
                       <div className="space-y-2 pl-12">
@@ -194,6 +227,14 @@ export function SessionDetailDialog({ session, exercises, open, onOpenChange, on
         exercises={exercises}
         onSuccess={refetchSets}
       />
+
+      {progressDialogExercise && (
+        <ExerciseProgressDialog
+          exercise={progressDialogExercise}
+          open={!!progressDialogExercise}
+          onOpenChange={(open) => !open && setProgressDialogExercise(null)}
+        />
+      )}
     </>
   );
 }
