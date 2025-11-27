@@ -370,6 +370,36 @@ export type Database = {
           },
         ]
       }
+      pomodoro_sessions: {
+        Row: {
+          completed_at: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          preset_name: string
+          session_type: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          preset_name: string
+          session_type: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          preset_name?: string
+          session_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       privacy_settings: {
         Row: {
           created_at: string
