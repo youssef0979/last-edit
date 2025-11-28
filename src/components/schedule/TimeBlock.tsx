@@ -1,7 +1,7 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { GripVertical, StickyNote, CheckCircle2 } from "lucide-react";
+import { StickyNote, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -122,7 +122,7 @@ export function TimeBlock({
   };
 
   // Attach global listeners
-  useState(() => {
+  useEffect(() => {
     if (isDragging || isResizing) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("mouseup", handleMouseUp);
@@ -131,7 +131,7 @@ export function TimeBlock({
         window.removeEventListener("mouseup", handleMouseUp);
       };
     }
-  });
+  }, [isDragging, isResizing]);
 
   const startPx = timeToPixels(block.start_time);
   const endPx = timeToPixels(block.end_time);
@@ -166,12 +166,14 @@ export function TimeBlock({
       >
       {/* Resize handle - left */}
       <div
-        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity bg-primary/20 hover:bg-primary/40 rounded-l-lg"
+        className="absolute left-0 top-0 bottom-0 w-3 cursor-ew-resize bg-primary/10 hover:bg-primary/30 transition-colors rounded-l-lg z-10"
         onMouseDown={(e) => {
           e.stopPropagation();
           handleMouseDown(e, "resize-left");
         }}
-      />
+      >
+        <div className="absolute left-0.5 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full" />
+      </div>
 
         {/* Content */}
         <div className="relative h-full flex flex-col justify-between p-2 overflow-hidden">
@@ -207,13 +209,13 @@ export function TimeBlock({
 
       {/* Resize handle - right */}
       <div
-        className="absolute right-0 top-0 bottom-0 w-2 cursor-ew-resize opacity-0 group-hover:opacity-100 transition-opacity bg-primary/20 hover:bg-primary/40 rounded-r-lg"
+        className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize bg-primary/10 hover:bg-primary/30 transition-colors rounded-r-lg z-10"
         onMouseDown={(e) => {
           e.stopPropagation();
           handleMouseDown(e, "resize-right");
         }}
       >
-        <GripVertical className="h-3 w-3 absolute right-0 top-1/2 -translate-y-1/2 text-primary" />
+        <div className="absolute right-0.5 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-full" />
       </div>
     </div>
 
