@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pin, Palette, Tag, List, Type, X } from "lucide-react";
+import { ArrowLeft, Pin, Palette, Tag, List, Type, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { debounce } from "lodash";
 import { z } from "zod";
+import { cn } from "@/lib/utils";
 
 const PRESET_COLORS = [
-  "#ffffff", "#fef3c7", "#fecaca", "#fbcfe8", "#ddd6fe", 
-  "#bfdbfe", "#a7f3d0", "#fde68a", "#fed7aa",
+  "#FFFFFF", "#F8FAFC", "#F1F5F9", "#FEF3C7", "#FEE2E2", 
+  "#FCE7F3", "#EDE9FE", "#DBEAFE", "#D1FAE5", "#FED7AA",
 ];
 
 const noteSchema = z.object({
@@ -38,9 +38,9 @@ export default function NoteEditor() {
   const [checklistItems, setChecklistItems] = useState<{ text: string; checked: boolean }[]>([]);
   const [hasCreatedNote, setHasCreatedNote] = useState(!!noteId);
   const [currentNoteId, setCurrentNoteId] = useState(noteId || null);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch existing note if editing
   const { data: note } = useQuery({
     queryKey: ["note", noteId],
     queryFn: async () => {
@@ -79,7 +79,6 @@ export default function NoteEditor() {
 
   const saveNoteMutation = useMutation({
     mutationFn: async (noteData: any) => {
-      // Validate input
       try {
         noteSchema.parse(noteData);
       } catch (error) {
@@ -117,7 +116,6 @@ export default function NoteEditor() {
     },
   });
 
-  // Debounced auto-save
   const debouncedSave = useCallback(
     debounce((data: any) => {
       if (hasCreatedNote || data.title || data.body || data.checklist) {
@@ -156,7 +154,7 @@ export default function NoteEditor() {
       try {
         await saveNoteMutation.mutateAsync(noteData);
       } catch {
-        // error toast already handled in onError
+        // error toast already handled
       }
     }
     navigate("/notes");
@@ -195,113 +193,186 @@ export default function NoteEditor() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-muted">
-      {/* Header */}
-      <header className="border-b border-border/60 bg-background/80 backdrop-blur-sm">
-        <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Note</span>
-              <span className="text-xs text-muted-foreground">All changes are saved automatically</span>
+    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background">
+      {/* Premium Header */}
+      <header className="sticky top-0 z-50 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container max-w-5xl mx-auto">
+          <div className="flex items-center justify-between h-16 px-4">
+            {/* Left Section */}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="hover:bg-muted/80 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="hidden sm:flex flex-col">
+                <span className="text-sm font-medium text-foreground">Note Editor</span>
+                <span className="text-xs text-muted-foreground">Auto-saved</span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant={isPinned ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setIsPinned(!isPinned)}
-            >
-              <Pin className="h-4 w-4" />
-            </Button>
-            <Separator orientation="vertical" className="h-6" />
-            <Button
-              variant={showChecklist ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setShowChecklist(!showChecklist)}
-            >
-              {showChecklist ? <List className="h-4 w-4" /> : <Type className="h-4 w-4" />}
-            </Button>
+            {/* Right Section */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={isPinned ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setIsPinned(!isPinned)}
+                className="hover:bg-muted/80 transition-colors"
+              >
+                <Pin className={cn("h-4 w-4", isPinned && "fill-current")} />
+              </Button>
+              <div className="h-5 w-px bg-border/60" />
+              <Button
+                variant={showChecklist ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => setShowChecklist(!showChecklist)}
+                className="hover:bg-muted/80 transition-colors"
+              >
+                {showChecklist ? <List className="h-4 w-4" /> : <Type className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Note Content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
-            <div className="p-6 space-y-4" style={{ backgroundColor: color }}>
-              {/* Icon & Title */}
-              <div className="flex gap-3">
+      {/* Main Content Area */}
+      <main className="container max-w-4xl mx-auto px-4 py-12">
+        <div className="animate-fade-in">
+          {/* Note Card */}
+          <div
+            className="rounded-2xl border border-border/60 bg-card shadow-xl overflow-hidden transition-all duration-300"
+            style={{ backgroundColor: color }}
+          >
+            <div className="p-8 space-y-6">
+              {/* Title Section */}
+              <div className="space-y-4">
+                {/* Icon Input */}
+                <div className="flex items-center gap-3">
+                  <div className="relative group">
+                    <Input
+                      placeholder="📝"
+                      value={icon}
+                      onChange={(e) => setIcon(e.target.value.slice(0, 2))}
+                      className="w-14 h-14 text-center text-2xl border-border/60 bg-background/80 backdrop-blur-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                      maxLength={2}
+                    />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowColorPicker(!showColorPicker)}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <Palette className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </div>
+
+                {/* Color Picker Dropdown */}
+                {showColorPicker && (
+                  <div className="p-4 rounded-xl border border-border/60 bg-background/95 backdrop-blur-sm shadow-lg animate-scale-in">
+                    <p className="text-xs font-medium text-muted-foreground mb-3">Background Color</p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {PRESET_COLORS.map((c) => (
+                        <button
+                          key={c}
+                          className={cn(
+                            "w-10 h-10 rounded-lg border-2 transition-all hover:scale-110",
+                            c === color ? "border-primary ring-2 ring-primary/20" : "border-transparent hover:border-border"
+                          )}
+                          style={{ backgroundColor: c }}
+                          onClick={() => {
+                            setColor(c);
+                            setShowColorPicker(false);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Title Input */}
                 <Input
-                  placeholder="🎯"
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-                  className="w-16 text-center text-xl"
-                  maxLength={2}
-                />
-                <Input
-                  placeholder="Title"
+                  placeholder="Untitled"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="flex-1 font-semibold text-lg"
+                  className="text-3xl font-bold border-0 bg-transparent px-0 focus-visible:ring-0 placeholder:text-muted-foreground/40"
                 />
               </div>
 
-              {/* Body or Checklist */}
+              {/* Divider */}
+              <div className="h-px bg-border/40" />
+
+              {/* Content Section */}
               {showChecklist ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {checklistItems.map((item, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
+                    <div
+                      key={idx}
+                      className="group flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors"
+                    >
                       <Checkbox
                         checked={item.checked}
                         onCheckedChange={() => toggleChecklistItem(idx)}
+                        className="mt-1"
                       />
                       <Input
                         value={item.text}
                         onChange={(e) => updateChecklistItem(idx, e.target.value)}
                         placeholder="List item"
-                        className="flex-1"
+                        className={cn(
+                          "flex-1 border-0 bg-transparent px-0 focus-visible:ring-0",
+                          item.checked && "line-through opacity-60"
+                        )}
                       />
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => removeChecklistItem(idx)}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   ))}
-                  <Button variant="outline" size="sm" onClick={addChecklistItem}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={addChecklistItem}
+                    className="mt-2 border-border/60 hover:bg-muted/50"
+                  >
                     + Add item
                   </Button>
                 </div>
               ) : (
                 <Textarea
-                  placeholder="Take a note..."
+                  placeholder="Start writing..."
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  className="min-h-[400px] resize-none"
+                  className="min-h-[400px] resize-none border-0 bg-transparent px-0 text-base leading-relaxed focus-visible:ring-0 placeholder:text-muted-foreground/40"
                 />
               )}
 
-              {/* Tags */}
-              <div className="space-y-2">
+              {/* Divider */}
+              <div className="h-px bg-border/40" />
+
+              {/* Tags Section */}
+              <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Add tags (press Enter)"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && addTag()}
-                    className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    className="flex-1 border-0 bg-transparent px-0 text-sm focus-visible:ring-0 placeholder:text-muted-foreground/60"
                   />
                 </div>
                 {tags.length > 0 && (
@@ -309,37 +380,19 @@ export default function NoteEditor() {
                     {tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
+                        className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20 transition-all hover:bg-primary/20"
                       >
                         {tag}
-                        <button onClick={() => removeTag(tag)}>
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="opacity-60 hover:opacity-100 transition-opacity"
+                        >
                           <X className="h-3 w-3" />
                         </button>
                       </span>
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Color Picker */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Palette className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Background</span>
-                </div>
-                <div className="flex gap-2">
-                  {PRESET_COLORS.map((c) => (
-                    <button
-                      key={c}
-                      className="w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
-                      style={{
-                        backgroundColor: c,
-                        borderColor: c === color ? "#000" : "transparent",
-                      }}
-                      onClick={() => setColor(c)}
-                    />
-                  ))}
-                </div>
               </div>
             </div>
           </div>
