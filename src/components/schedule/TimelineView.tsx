@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { TimeBlock } from "./TimeBlock";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
 interface TimelineViewProps {
@@ -118,13 +117,12 @@ export function TimelineView({ selectedDate, zoom }: TimelineViewProps) {
 
   return (
     <div className="relative h-full flex flex-col">
-      <ScrollArea className="flex-1">
-        <div
-          ref={scrollRef}
-          className="relative h-full overflow-x-auto overflow-y-hidden pb-4"
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-x-auto overflow-y-auto pb-4 scrollbar-thin scrollbar-thumb-border scrollbar-track-background"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
           <div
             className="relative bg-background"
             style={{ width: `${24 * hourWidth}px`, minHeight: "200px" }}
@@ -196,7 +194,6 @@ export function TimelineView({ selectedDate, zoom }: TimelineViewProps) {
             )}
           </div>
         </div>
-      </ScrollArea>
-    </div>
+      </div>
   );
 }
