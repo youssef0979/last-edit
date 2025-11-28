@@ -17,6 +17,7 @@ import Friends from "./pages/Friends";
 import FriendProfile from "./pages/FriendProfile";
 import Pomodoro from "./pages/Pomodoro";
 import Gym from "./pages/Gym";
+import Schedule from "./pages/Schedule";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminContent from "./pages/admin/AdminContent";
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/friends/:friendId" element={<Layout><FriendProfile /></Layout>} />
               <Route path="/pomodoro" element={<Layout><Pomodoro /></Layout>} />
               <Route path="/gym" element={<Layout><Gym /></Layout>} />
+              <Route path="/schedule" element={<Layout><Schedule /></Layout>} />
               <Route path="/admin" element={<AdminUsers />} />
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
               <Route path="/admin/content" element={<AdminContent />} />

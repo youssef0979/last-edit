@@ -748,6 +748,48 @@ export type Database = {
         }
         Relationships: []
       }
+      time_blocks: {
+        Row: {
+          color: string
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          icon: string | null
+          id: string
+          start_time: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          icon?: string | null
+          id?: string
+          start_time: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          icon?: string | null
+          id?: string
+          start_time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
