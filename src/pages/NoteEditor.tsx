@@ -125,30 +125,39 @@ export default function NoteEditor() {
     [hasCreatedNote, saveNoteMutation]
   );
 
-  const buildNoteData = () => ({
-    title: title.trim() || null,
-    body: body.trim() || null,
-    icon: icon.trim() || null,
-    color,
-    tags,
-    is_pinned: isPinned,
-    checklist:
-      showChecklist && checklistItems.length > 0
-        ? JSON.stringify({ items: checklistItems })
-        : null,
-  });
-
   const handleAutoSave = useCallback(() => {
-    const noteData = buildNoteData();
+    const noteData = {
+      title: title.trim() || null,
+      body: body.trim() || null,
+      icon: icon.trim() || null,
+      color,
+      tags,
+      is_pinned: isPinned,
+      checklist:
+        showChecklist && checklistItems.length > 0
+          ? JSON.stringify({ items: checklistItems })
+          : null,
+    };
     debouncedSave(noteData);
-  }, [buildNoteData, debouncedSave]);
+  }, [title, body, icon, color, tags, isPinned, showChecklist, checklistItems, debouncedSave]);
 
   useEffect(() => {
     handleAutoSave();
   }, [title, body, icon, color, tags, isPinned, checklistItems, handleAutoSave]);
 
   const handleBack = async () => {
-    const noteData = buildNoteData();
+    const noteData = {
+      title: title.trim() || null,
+      body: body.trim() || null,
+      icon: icon.trim() || null,
+      color,
+      tags,
+      is_pinned: isPinned,
+      checklist:
+        showChecklist && checklistItems.length > 0
+          ? JSON.stringify({ items: checklistItems })
+          : null,
+    };
     const hasContent = noteData.title || noteData.body || noteData.checklist;
     if (hasContent) {
       try {
