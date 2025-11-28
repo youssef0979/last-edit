@@ -129,7 +129,6 @@ export function TimeBlock({
   const handleMouseUp = () => {
     if (optimisticPosition) {
       updateBlockMutation.mutate(optimisticPosition);
-      setOptimisticPosition(null);
     }
     setIsDragging(false);
     setIsResizing(null);
@@ -146,6 +145,17 @@ export function TimeBlock({
       };
     }
   }, [isDragging, isResizing]);
+
+  // Clear optimistic position once server state matches
+  useEffect(() => {
+    if (
+      optimisticPosition &&
+      optimisticPosition.start_time === block.start_time &&
+      optimisticPosition.end_time === block.end_time
+    ) {
+      setOptimisticPosition(null);
+    }
+  }, [block.start_time, block.end_time, optimisticPosition]);
 
   const displayStartTime = optimisticPosition?.start_time || block.start_time;
   const displayEndTime = optimisticPosition?.end_time || block.end_time;
