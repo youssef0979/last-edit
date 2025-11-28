@@ -18,9 +18,9 @@ const PRESET_COLORS = [
 ];
 
 const noteSchema = z.object({
-  title: z.string().max(200, "Title must be less than 200 characters").optional(),
-  body: z.string().max(10000, "Body must be less than 10,000 characters").optional(),
-  icon: z.string().max(2, "Icon must be 1-2 characters").optional(),
+  title: z.string().max(200, "Title must be less than 200 characters").nullable().optional(),
+  body: z.string().max(10000, "Body must be less than 10,000 characters").nullable().optional(),
+  icon: z.string().max(2, "Icon must be 1-2 characters").nullable().optional(),
   tags: z.array(z.string().max(50, "Tag must be less than 50 characters")).optional(),
 });
 
@@ -120,33 +120,45 @@ export default function NoteEditor() {
   // Debounced auto-save
   const debouncedSave = useCallback(
     debounce((data: any) => {
-      if (hasCreatedNote || title.trim() || body.trim() || checklistItems.some(item => item.text.trim())) {
+      if (hasCreatedNote || data.title || data.body || data.checklist) {
         saveNoteMutation.mutate(data);
       }
-    }, 500),
-    [hasCreatedNote, title, body, checklistItems]
+    }, 400),
+    [hasCreatedNote, saveNoteMutation]
   );
 
-  const handleAutoSave = useCallback(() => {
-    const noteData = {
-      title: title.trim() || null,
-      body: body.trim() || null,
-      icon: icon.trim() || null,
-      color,
-      tags,
-      is_pinned: isPinned,
-      checklist: showChecklist && checklistItems.length > 0
+  const buildNoteData = () => ({
+    title: title.trim() || null,
+    body: body.trim() || null,
+    icon: icon.trim() || null,
+    color,
+    tags,
+    is_pinned: isPinned,
+    checklist:
+      showChecklist && checklistItems.length > 0
         ? JSON.stringify({ items: checklistItems })
         : null,
-    };
+  });
+
+  const handleAutoSave = useCallback(() => {
+    const noteData = buildNoteData();
     debouncedSave(noteData);
-  }, [title, body, icon, color, tags, isPinned, showChecklist, checklistItems, debouncedSave]);
+  }, [buildNoteData, debouncedSave]);
 
   useEffect(() => {
     handleAutoSave();
   }, [title, body, icon, color, tags, isPinned, checklistItems, handleAutoSave]);
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    const noteData = buildNoteData();
+    const hasContent = noteData.title || noteData.body || noteData.checklist;
+    if (hasContent) {
+      try {
+        await saveNoteMutation.mutateAsync(noteData);
+      } catch {
+        // error toast already handled in onError
+      }
+    }
     navigate("/notes");
   };
 
@@ -183,18 +195,24 @@ export default function NoteEditor() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-muted">
       {/* Header */}
-      <div className="border-b border-border bg-card p-4">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          
+      <header className="border-b border-border/60 bg-background/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between max-w-4xl mx-auto px-4 py-3">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-foreground">Note</span>
+              <span className="text-xs text-muted-foreground">All changes are saved automatically</span>
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <Button
               variant={isPinned ? "default" : "ghost"}
@@ -213,116 +231,120 @@ export default function NoteEditor() {
             </Button>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Note Content */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto p-6 space-y-4" style={{ backgroundColor: color }}>
-          {/* Icon & Title */}
-          <div className="flex gap-3">
-            <Input
-              placeholder="🎯"
-              value={icon}
-              onChange={(e) => setIcon(e.target.value.slice(0, 2))}
-              className="w-16 text-center text-xl"
-              maxLength={2}
-            />
-            <Input
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="flex-1 font-semibold text-lg"
-            />
-          </div>
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="rounded-2xl border border-border/60 bg-card shadow-lg overflow-hidden">
+            <div className="p-6 space-y-4" style={{ backgroundColor: color }}>
+              {/* Icon & Title */}
+              <div className="flex gap-3">
+                <Input
+                  placeholder="🎯"
+                  value={icon}
+                  onChange={(e) => setIcon(e.target.value.slice(0, 2))}
+                  className="w-16 text-center text-xl"
+                  maxLength={2}
+                />
+                <Input
+                  placeholder="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="flex-1 font-semibold text-lg"
+                />
+              </div>
 
-          {/* Body or Checklist */}
-          {showChecklist ? (
-            <div className="space-y-2">
-              {checklistItems.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Checkbox
-                    checked={item.checked}
-                    onCheckedChange={() => toggleChecklistItem(idx)}
-                  />
-                  <Input
-                    value={item.text}
-                    onChange={(e) => updateChecklistItem(idx, e.target.value)}
-                    placeholder="List item"
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeChecklistItem(idx)}
-                  >
-                    <X className="h-4 w-4" />
+              {/* Body or Checklist */}
+              {showChecklist ? (
+                <div className="space-y-2">
+                  {checklistItems.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={item.checked}
+                        onCheckedChange={() => toggleChecklistItem(idx)}
+                      />
+                      <Input
+                        value={item.text}
+                        onChange={(e) => updateChecklistItem(idx, e.target.value)}
+                        placeholder="List item"
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeChecklistItem(idx)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={addChecklistItem}>
+                    + Add item
                   </Button>
                 </div>
-              ))}
-              <Button variant="outline" size="sm" onClick={addChecklistItem}>
-                + Add item
-              </Button>
-            </div>
-          ) : (
-            <Textarea
-              placeholder="Take a note..."
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="min-h-[400px] resize-none"
-            />
-          )}
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Add tags (press Enter)"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addTag()}
-                className="flex-1"
-              />
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
-                  >
-                    {tag}
-                    <button onClick={() => removeTag(tag)}>
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Color Picker */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Background</span>
-            </div>
-            <div className="flex gap-2">
-              {PRESET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  className="w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
-                  style={{
-                    backgroundColor: c,
-                    borderColor: c === color ? "#000" : "transparent",
-                  }}
-                  onClick={() => setColor(c)}
+              ) : (
+                <Textarea
+                  placeholder="Take a note..."
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  className="min-h-[400px] resize-none"
                 />
-              ))}
+              )}
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Add tags (press Enter)"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyPress={(e) => e.key === "Enter" && addTag()}
+                    className="flex-1"
+                  />
+                </div>
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-primary/10 text-primary"
+                      >
+                        {tag}
+                        <button onClick={() => removeTag(tag)}>
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Color Picker */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Palette className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Background</span>
+                </div>
+                <div className="flex gap-2">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      className="w-8 h-8 rounded-full border-2 transition-all hover:scale-110"
+                      style={{
+                        backgroundColor: c,
+                        borderColor: c === color ? "#000" : "transparent",
+                      }}
+                      onClick={() => setColor(c)}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

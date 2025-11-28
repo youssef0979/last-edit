@@ -24,9 +24,9 @@ const PRESET_COLORS = [
 ];
 
 const noteSchema = z.object({
-  title: z.string().max(200, "Title must be less than 200 characters").optional(),
-  body: z.string().max(10000, "Body must be less than 10,000 characters").optional(),
-  icon: z.string().max(2, "Icon must be 1-2 characters").optional(),
+  title: z.string().max(200, "Title must be less than 200 characters").nullable().optional(),
+  body: z.string().max(10000, "Body must be less than 10,000 characters").nullable().optional(),
+  icon: z.string().max(2, "Icon must be 1-2 characters").nullable().optional(),
   tags: z.array(z.string().max(50, "Tag must be less than 50 characters")).optional(),
 });
 
