@@ -166,7 +166,7 @@ export default function NoteEditor() {
         // error toast already handled
       }
     }
-    navigate("/notes");
+    navigate(-1);
   };
 
   const addTag = () => {
