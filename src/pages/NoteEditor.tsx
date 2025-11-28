@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pin, Palette, Tag, List, Type, X, Check } from "lucide-react";
+import { Save, Pin, Palette, Tag, List, Type, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -145,7 +145,7 @@ export default function NoteEditor() {
     handleAutoSave();
   }, [title, body, icon, color, tags, isPinned, checklistItems, handleAutoSave]);
 
-  const handleBack = async () => {
+  const handleSave = async () => {
     const noteData = {
       title: title.trim() || null,
       body: body.trim() || null,
@@ -162,11 +162,12 @@ export default function NoteEditor() {
     if (hasContent) {
       try {
         await saveNoteMutation.mutateAsync(noteData);
+        toast.success("Note saved successfully");
       } catch {
         // error toast already handled
       }
     }
-    navigate(-1);
+    navigate("/notes");
   };
 
   const addTag = () => {
@@ -210,12 +211,13 @@ export default function NoteEditor() {
             {/* Left Section */}
             <div className="flex items-center gap-4">
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={handleBack}
-                className="hover:bg-muted/80 transition-colors"
+                variant="default"
+                size="sm"
+                onClick={handleSave}
+                className="gap-2"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <Save className="h-4 w-4" />
+                Save
               </Button>
               <div className="hidden sm:flex flex-col">
                 <span className="text-sm font-medium text-foreground">Note Editor</span>
