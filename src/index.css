@@ -2,125 +2,150 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* 
+  RESOLVE VISUAL IDENTITY SYSTEM
+  A cohesive design language for productivity and focus
+  
+  Philosophy: Calm, mature, unobtrusive
+  Palette: Muted sage greens, warm neutrals, soft terracotta accents
+  Typography: DM Sans - clean, readable, professional
+  Motion: Subtle (100-150ms) - never distracting
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 180 8% 15%;
+    /* Base Surfaces - Warm, neutral foundation */
+    --background: 30 10% 97%;
+    --foreground: 210 12% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 180 8% 15%;
+    --card-foreground: 210 12% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 180 8% 15%;
+    --popover-foreground: 210 12% 16%;
 
-    --primary: 180 60% 35%;
+    /* Primary - Muted sage/teal for main actions */
+    --primary: 165 35% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 180 30% 92%;
-    --secondary-foreground: 180 60% 35%;
+    /* Secondary - Soft warm gray */
+    --secondary: 30 8% 90%;
+    --secondary-foreground: 210 12% 16%;
 
-    --muted: 180 20% 96%;
-    --muted-foreground: 180 8% 45%;
+    /* Muted - Subtle background variations */
+    --muted: 30 12% 94%;
+    --muted-foreground: 210 10% 48%;
 
-    --accent: 15 90% 65%;
+    /* Accent - Soft terracotta for highlights */
+    --accent: 15 45% 58%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
+    /* Destructive - Muted red, not alarming */
+    --destructive: 0 55% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 180 20% 90%;
-    --input: 180 20% 90%;
-    --ring: 180 60% 35%;
+    /* Borders & Inputs - Barely visible separation */
+    --border: 30 12% 88%;
+    --input: 30 12% 88%;
+    --ring: 165 35% 42%;
 
+    /* Unified border radius - 12px for calm, rounded feel */
     --radius: 0.75rem;
 
-    --sidebar-background: 180 60% 98%;
-    --sidebar-foreground: 180 8% 15%;
-    --sidebar-primary: 180 60% 35%;
+    /* Sidebar - Slightly darker for hierarchy */
+    --sidebar-background: 30 15% 95%;
+    --sidebar-foreground: 210 12% 16%;
+    --sidebar-primary: 165 35% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 180 30% 92%;
-    --sidebar-accent-foreground: 180 60% 35%;
-    --sidebar-border: 180 20% 90%;
-    --sidebar-ring: 180 60% 35%;
+    --sidebar-accent: 30 8% 90%;
+    --sidebar-accent-foreground: 210 12% 16%;
+    --sidebar-border: 30 12% 88%;
+    --sidebar-ring: 165 35% 42%;
 
-    --chart-1: 180 60% 50%;
-    --chart-2: 15 90% 65%;
-    --chart-3: 280 60% 60%;
-    --chart-4: 45 80% 60%;
-    --chart-5: 120 50% 50%;
+    /* Charts - Cohesive with primary palette */
+    --chart-1: 165 35% 50%;
+    --chart-2: 15 45% 60%;
+    --chart-3: 280 30% 55%;
+    --chart-4: 45 50% 60%;
+    --chart-5: 145 30% 50%;
     
-    /* Tracker-specific colors */
-    --tracker-performance: 180 60% 50%;
-    --tracker-habits: 120 50% 50%;
-    --tracker-sleep: 280 60% 60%;
-    --tracker-calendar: 15 90% 65%;
+    /* Tracker colors - Muted but distinct */
+    --tracker-performance: 165 35% 50%;
+    --tracker-habits: 145 30% 50%;
+    --tracker-sleep: 280 30% 55%;
+    --tracker-calendar: 15 45% 60%;
     
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Shadows - Very subtle, warm tint */
+    --shadow-sm: 0 1px 2px 0 rgba(30, 20, 10, 0.04);
+    --shadow-md: 0 3px 8px -2px rgba(30, 20, 10, 0.08);
+    --shadow-lg: 0 8px 16px -4px rgba(30, 20, 10, 0.12);
+    --shadow-xl: 0 16px 32px -8px rgba(30, 20, 10, 0.16);
   }
 
   .dark {
-    --background: 180 15% 8%;
-    --foreground: 0 0% 95%;
+    /* Base Surfaces - Deep, warm dark */
+    --background: 210 18% 11%;
+    --foreground: 30 10% 92%;
 
-    --card: 180 15% 10%;
-    --card-foreground: 0 0% 95%;
+    --card: 210 16% 14%;
+    --card-foreground: 30 10% 92%;
 
-    --popover: 180 15% 10%;
-    --popover-foreground: 0 0% 95%;
+    --popover: 210 16% 14%;
+    --popover-foreground: 30 10% 92%;
 
-    --primary: 180 60% 50%;
-    --primary-foreground: 0 0% 10%;
+    /* Primary - Slightly brighter sage for contrast */
+    --primary: 165 40% 55%;
+    --primary-foreground: 210 18% 11%;
 
-    --secondary: 180 25% 15%;
-    --secondary-foreground: 0 0% 95%;
+    /* Secondary - Darker warm gray */
+    --secondary: 210 12% 20%;
+    --secondary-foreground: 30 10% 92%;
 
-    --muted: 180 15% 15%;
-    --muted-foreground: 180 8% 65%;
+    /* Muted - Subtle dark background variation */
+    --muted: 210 14% 18%;
+    --muted-foreground: 30 8% 65%;
 
-    --accent: 15 90% 60%;
-    --accent-foreground: 0 0% 95%;
+    /* Accent - Warmer terracotta in dark */
+    --accent: 15 50% 62%;
+    --accent-foreground: 210 18% 11%;
 
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 95%;
+    /* Destructive - Softer red */
+    --destructive: 0 60% 58%;
+    --destructive-foreground: 30 10% 92%;
 
-    --border: 180 15% 20%;
-    --input: 180 15% 20%;
-    --ring: 180 60% 50%;
+    /* Borders - Subtle separation */
+    --border: 210 14% 22%;
+    --input: 210 14% 22%;
+    --ring: 165 40% 55%;
 
-    --sidebar-background: 180 20% 10%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 180 60% 50%;
-    --sidebar-primary-foreground: 0 0% 10%;
-    --sidebar-accent: 180 25% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 180 15% 20%;
-    --sidebar-ring: 180 60% 50%;
+    /* Sidebar - Even darker for depth */
+    --sidebar-background: 210 20% 9%;
+    --sidebar-foreground: 30 10% 92%;
+    --sidebar-primary: 165 40% 55%;
+    --sidebar-primary-foreground: 210 18% 11%;
+    --sidebar-accent: 210 12% 20%;
+    --sidebar-accent-foreground: 30 10% 92%;
+    --sidebar-border: 210 14% 22%;
+    --sidebar-ring: 165 40% 55%;
 
-    --chart-1: 180 60% 60%;
-    --chart-2: 15 90% 70%;
-    --chart-3: 280 60% 65%;
-    --chart-4: 45 80% 65%;
-    --chart-5: 120 50% 60%;
+    /* Charts - Adjusted for dark mode visibility */
+    --chart-1: 165 40% 60%;
+    --chart-2: 15 50% 65%;
+    --chart-3: 280 35% 60%;
+    --chart-4: 45 55% 65%;
+    --chart-5: 145 35% 58%;
     
-    /* Tracker-specific colors (dark mode) */
-    --tracker-performance: 180 60% 60%;
-    --tracker-habits: 120 50% 60%;
-    --tracker-sleep: 280 60% 65%;
-    --tracker-calendar: 15 90% 70%;
+    /* Tracker colors - Dark mode adjusted */
+    --tracker-performance: 165 40% 60%;
+    --tracker-habits: 145 35% 58%;
+    --tracker-sleep: 280 35% 60%;
+    --tracker-calendar: 15 50% 65%;
     
-    /* Shadows (dark mode) */
+    /* Shadows - Deeper in dark mode */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 3px 8px -2px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -130,6 +155,32 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Custom scrollbar styling for consistent visual language */
+@layer utilities {
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted)) transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: var(--radius);
+  }
+
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 }
