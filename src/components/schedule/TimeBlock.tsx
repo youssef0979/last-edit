@@ -27,6 +27,10 @@ export function TimeBlock({
   const [isResizing, setIsResizing] = useState<"left" | "right" | null>(null);
   const [dragStart, setDragStart] = useState<number>(0);
   const [showNotePreview, setShowNotePreview] = useState(false);
+  const [optimisticPosition, setOptimisticPosition] = useState<{
+    start_time: string;
+    end_time: string;
+  } | null>(null);
   const blockRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -90,8 +94,8 @@ export function TimeBlock({
     if (!isDragging && !isResizing) return;
 
     const delta = e.clientX - dragStart;
-    const startPx = timeToPixels(block.start_time);
-    const endPx = timeToPixels(block.end_time);
+    const startPx = timeToPixels(optimisticPosition?.start_time || block.start_time);
+    const endPx = timeToPixels(optimisticPosition?.end_time || block.end_time);
 
     if (isDragging) {
       const newStartPx = Math.max(0, startPx + delta);
@@ -99,24 +103,34 @@ export function TimeBlock({
       const newStartTime = pixelsToTime(newStartPx);
       const newEndTime = pixelsToTime(newEndPx);
 
-      updateBlockMutation.mutate({
+      setOptimisticPosition({
         start_time: newStartTime,
         end_time: newEndTime,
       });
     } else if (isResizing === "left") {
       const newStartPx = Math.max(0, Math.min(startPx + delta, endPx - hourWidth / 4));
       const newStartTime = pixelsToTime(newStartPx);
-      updateBlockMutation.mutate({ start_time: newStartTime });
+      setOptimisticPosition({
+        start_time: newStartTime,
+        end_time: optimisticPosition?.end_time || block.end_time,
+      });
     } else if (isResizing === "right") {
       const newEndPx = Math.max(endPx + delta, startPx + hourWidth / 4);
       const newEndTime = pixelsToTime(newEndPx);
-      updateBlockMutation.mutate({ end_time: newEndTime });
+      setOptimisticPosition({
+        start_time: optimisticPosition?.start_time || block.start_time,
+        end_time: newEndTime,
+      });
     }
 
     setDragStart(e.clientX);
   };
 
   const handleMouseUp = () => {
+    if (optimisticPosition) {
+      updateBlockMutation.mutate(optimisticPosition);
+      setOptimisticPosition(null);
+    }
     setIsDragging(false);
     setIsResizing(null);
   };
@@ -133,8 +147,10 @@ export function TimeBlock({
     }
   }, [isDragging, isResizing]);
 
-  const startPx = timeToPixels(block.start_time);
-  const endPx = timeToPixels(block.end_time);
+  const displayStartTime = optimisticPosition?.start_time || block.start_time;
+  const displayEndTime = optimisticPosition?.end_time || block.end_time;
+  const startPx = timeToPixels(displayStartTime);
+  const endPx = timeToPixels(displayEndTime);
   const width = endPx - startPx;
 
   const handleBlockClick = (e: React.MouseEvent) => {
@@ -202,8 +218,8 @@ export function TimeBlock({
             <QuickActionsMenu block={block} />
           </div>
           <div className="text-xs text-muted-foreground">
-            {format(new Date(`2000-01-01T${block.start_time}`), "HH:mm")} -{" "}
-            {format(new Date(`2000-01-01T${block.end_time}`), "HH:mm")}
+            {format(new Date(`2000-01-01T${displayStartTime}`), "HH:mm")} -{" "}
+            {format(new Date(`2000-01-01T${displayEndTime}`), "HH:mm")}
           </div>
         </div>
 
