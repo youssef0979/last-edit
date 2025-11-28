@@ -57,7 +57,7 @@ export default function Schedule() {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  {format(selectedDate, "MMMM d, yyyy")}
+                  {format(selectedDate, "EEEE do, yyyy")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0">
