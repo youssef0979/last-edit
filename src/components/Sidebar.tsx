@@ -15,7 +15,8 @@ import {
   Users,
   Timer,
   Dumbbell,
-  CalendarClock
+  CalendarClock,
+  StickyNote
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -53,6 +54,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     { name: "Sleep", href: "/sleep", icon: Moon },
     { name: "Calendar", href: "/calendar", icon: Calendar },
     { name: "Schedule", href: "/schedule", icon: CalendarClock },
+    { name: "Notes", href: "/notes", icon: StickyNote },
     { name: "Pomodoro", href: "/pomodoro", icon: Timer },
     { name: "Gym", href: "/gym", icon: Dumbbell },
     { name: "Friends", href: "/friends", icon: Users },
