@@ -5,7 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { NoteCard } from "@/components/notes/NoteCard";
 import { QuickCaptureButton } from "@/components/notes/QuickCaptureButton";
-import { CreateNoteCard } from "@/components/notes/CreateNoteCard";
 
 export default function Notes() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,9 +79,6 @@ export default function Notes() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Create Note Card */}
-            <CreateNoteCard />
-
             {/* Pinned Notes */}
             {pinnedNotes.length > 0 && (
               <div className="space-y-4">
