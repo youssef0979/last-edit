@@ -799,6 +799,7 @@ export type Database = {
           end_time: string
           icon: string | null
           id: string
+          note_id: string | null
           start_time: string
           title: string
           updated_at: string
@@ -812,6 +813,7 @@ export type Database = {
           end_time: string
           icon?: string | null
           id?: string
+          note_id?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -825,12 +827,21 @@ export type Database = {
           end_time?: string
           icon?: string | null
           id?: string
+          note_id?: string | null
           start_time?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "time_blocks_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pin, Trash, MoreVertical, Check } from "lucide-react";
+import { Pin, Trash, MoreVertical, Check, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NoteEditorDialog } from "./NoteEditorDialog";
+import { AddToTimelineDialog } from "./AddToTimelineDialog";
 
 interface NoteCardProps {
   note: any;
@@ -19,6 +20,7 @@ interface NoteCardProps {
 
 export function NoteCard({ note }: NoteCardProps) {
   const [showEditor, setShowEditor] = useState(false);
+  const [showTimelineDialog, setShowTimelineDialog] = useState(false);
   const queryClient = useQueryClient();
 
   const togglePinMutation = useMutation({
@@ -143,6 +145,22 @@ export function NoteCard({ note }: NoteCardProps) {
           )}
         </div>
 
+        {/* Add to Timeline Button */}
+        <div className="px-4 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTimelineDialog(true);
+            }}
+            className="w-full gap-2"
+          >
+            <CalendarClock className="h-3.5 w-3.5" />
+            Add to Timeline
+          </Button>
+        </div>
+
         {/* Actions (visible on hover) */}
         <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
@@ -180,6 +198,12 @@ export function NoteCard({ note }: NoteCardProps) {
         note={note}
         open={showEditor}
         onOpenChange={setShowEditor}
+      />
+
+      <AddToTimelineDialog
+        note={note}
+        open={showTimelineDialog}
+        onOpenChange={setShowTimelineDialog}
       />
     </>
   );
