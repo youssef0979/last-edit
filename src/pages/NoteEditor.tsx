@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { Save, Pin, Palette, Tag, List, Type, X, Check } from "lucide-react";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { debounce } from "lodash";
+
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 
@@ -116,36 +116,9 @@ export default function NoteEditor() {
     },
   });
 
-  const debouncedSave = useCallback(
-    debounce((data: any) => {
-      if (hasCreatedNote || data.title || data.body || data.checklist) {
-        saveNoteMutation.mutate(data);
-      }
-    }, 400),
-    [hasCreatedNote, saveNoteMutation]
-  );
 
-  const handleAutoSave = useCallback(() => {
-    const noteData = {
-      title: title.trim() || null,
-      body: body.trim() || null,
-      icon: icon.trim() || null,
-      color,
-      tags,
-      is_pinned: isPinned,
-      checklist:
-        showChecklist && checklistItems.length > 0
-          ? JSON.stringify({ items: checklistItems })
-          : null,
-    };
-    debouncedSave(noteData);
-  }, [title, body, icon, color, tags, isPinned, showChecklist, checklistItems, debouncedSave]);
 
-  useEffect(() => {
-    handleAutoSave();
-  }, [title, body, icon, color, tags, isPinned, checklistItems, handleAutoSave]);
-
-  const handleSave = async () => {
+  const handleSave = () => {
     const noteData = {
       title: title.trim() || null,
       body: body.trim() || null,
@@ -160,12 +133,7 @@ export default function NoteEditor() {
     };
     const hasContent = noteData.title || noteData.body || noteData.checklist;
     if (hasContent) {
-      try {
-        await saveNoteMutation.mutateAsync(noteData);
-        toast.success("Note saved successfully");
-      } catch {
-        // error toast already handled
-      }
+      saveNoteMutation.mutate(noteData);
     }
     navigate("/notes");
   };
@@ -221,7 +189,6 @@ export default function NoteEditor() {
               </Button>
               <div className="hidden sm:flex flex-col">
                 <span className="text-sm font-medium text-foreground">Note Editor</span>
-                <span className="text-xs text-muted-foreground">Auto-saved</span>
               </div>
             </div>
 
