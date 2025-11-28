@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { Save, Pin, Palette, Tag, List, Type, X, Check } from "lucide-react";
+import { Save, Pin, Palette, Tag, List, Type, X, Check, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -178,6 +178,14 @@ export default function NoteEditor() {
           <div className="flex items-center justify-between h-16 px-4">
             {/* Left Section */}
             <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/notes")}
+                className="hover:bg-muted/80 transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
               <Button
                 variant="default"
                 size="sm"
