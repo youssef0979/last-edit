@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Pin, Trash, MoreVertical, Check, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NoteEditorDialog } from "./NoteEditorDialog";
 import { AddToTimelineDialog } from "./AddToTimelineDialog";
 
 interface NoteCardProps {
@@ -19,7 +19,7 @@ interface NoteCardProps {
 }
 
 export function NoteCard({ note }: NoteCardProps) {
-  const [showEditor, setShowEditor] = useState(false);
+  const navigate = useNavigate();
   const [showTimelineDialog, setShowTimelineDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -68,7 +68,7 @@ export function NoteCard({ note }: NoteCardProps) {
           "animate-scale-in"
         )}
         style={{ backgroundColor: note.color }}
-        onClick={() => setShowEditor(true)}
+        onClick={() => navigate(`/notes/${note.id}`)}
       >
         {/* Pin indicator */}
         {note.is_pinned && (
@@ -193,12 +193,6 @@ export function NoteCard({ note }: NoteCardProps) {
           </DropdownMenu>
         </div>
       </div>
-
-      <NoteEditorDialog
-        note={note}
-        open={showEditor}
-        onOpenChange={setShowEditor}
-      />
 
       <AddToTimelineDialog
         note={note}

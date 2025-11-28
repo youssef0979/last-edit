@@ -19,6 +19,7 @@ import Pomodoro from "./pages/Pomodoro";
 import Gym from "./pages/Gym";
 import Schedule from "./pages/Schedule";
 import Notes from "./pages/Notes";
+import NoteEditor from "./pages/NoteEditor";
 import DesignSystem from "./pages/DesignSystem";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
@@ -68,6 +69,8 @@ const App = () => (
               <Route path="/gym" element={<Layout><Gym /></Layout>} />
               <Route path="/schedule" element={<Layout><Schedule /></Layout>} />
               <Route path="/notes" element={<Layout><Notes /></Layout>} />
+              <Route path="/notes/new" element={<NoteEditor />} />
+              <Route path="/notes/:noteId" element={<NoteEditor />} />
               <Route path="/design-system" element={<Layout><DesignSystem /></Layout>} />
               <Route path="/admin" element={<AdminUsers />} />
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
