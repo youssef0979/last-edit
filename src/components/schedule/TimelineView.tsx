@@ -110,8 +110,15 @@ export function TimelineView({ selectedDate, zoom }: TimelineViewProps) {
 
   const pixelsToTime = (pixels: number) => {
     const totalMinutes = Math.round((pixels / hourWidth) * 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = Math.round((totalMinutes % 60) / snapInterval) * snapInterval;
+    let hours = Math.floor(totalMinutes / 60);
+    let minutes = Math.round((totalMinutes % 60) / snapInterval) * snapInterval;
+    
+    // Handle edge case where minutes rounds to 60
+    if (minutes >= 60) {
+      hours += 1;
+      minutes = 0;
+    }
+    
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:00`;
   };
 
