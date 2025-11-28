@@ -145,28 +145,12 @@ export function NoteCard({ note }: NoteCardProps) {
           )}
         </div>
 
-        {/* Add to Timeline Button */}
-        <div className="px-4 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowTimelineDialog(true);
-            }}
-            className="w-full gap-2"
-          >
-            <CalendarClock className="h-3.5 w-3.5" />
-            Add to Timeline
-          </Button>
-        </div>
-
-        {/* Actions (visible on hover) */}
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Actions Menu (top-right corner) */}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
           <DropdownMenu>
             <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <MoreVertical className="h-3.5 w-3.5" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-background/80 backdrop-blur-sm">
+                <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -191,6 +175,22 @@ export function NoteCard({ note }: NoteCardProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+
+        {/* Add to Timeline Button */}
+        <div className="px-4 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowTimelineDialog(true);
+            }}
+            className="w-full gap-2"
+          >
+            <CalendarClock className="h-3.5 w-3.5" />
+            Add to Timeline
+          </Button>
         </div>
       </div>
 
