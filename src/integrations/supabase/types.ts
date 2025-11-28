@@ -386,6 +386,48 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          body: string | null
+          checklist: Json | null
+          color: string
+          created_at: string
+          icon: string | null
+          id: string
+          is_pinned: boolean
+          tags: string[] | null
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          checklist?: Json | null
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_pinned?: boolean
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          checklist?: Json | null
+          color?: string
+          created_at?: string
+          icon?: string | null
+          id?: string
+          is_pinned?: boolean
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       performance_cycles: {
         Row: {
           created_at: string
