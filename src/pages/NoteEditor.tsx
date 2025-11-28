@@ -252,8 +252,8 @@ export default function NoteEditor() {
         <div className="animate-fade-in">
           {/* Note Card */}
           <div
-            className="rounded-2xl border border-border/60 bg-card shadow-xl overflow-hidden transition-all duration-300"
-            style={{ backgroundColor: color }}
+            className="rounded-2xl border-2 bg-card shadow-xl overflow-hidden transition-all duration-300"
+            style={{ borderColor: color }}
           >
             <div className="p-8 space-y-6">
               {/* Title Section */}

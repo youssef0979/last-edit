@@ -64,10 +64,10 @@ export function NoteCard({ note }: NoteCardProps) {
     <>
       <div
         className={cn(
-          "group relative rounded-lg border border-border shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer overflow-hidden",
+          "group relative rounded-lg border-2 shadow-sm hover:shadow-md transition-all duration-150 cursor-pointer overflow-hidden bg-card",
           "animate-scale-in"
         )}
-        style={{ backgroundColor: note.color }}
+        style={{ borderColor: note.color }}
         onClick={() => navigate(`/notes/${note.id}`)}
       >
         <div className="p-4 space-y-3">
