@@ -70,13 +70,6 @@ export function NoteCard({ note }: NoteCardProps) {
         style={{ backgroundColor: note.color }}
         onClick={() => navigate(`/notes/${note.id}`)}
       >
-        {/* Pin indicator */}
-        {note.is_pinned && (
-          <div className="absolute top-2 right-2 opacity-50">
-            <Pin className="h-4 w-4 fill-current" />
-          </div>
-        )}
-
         <div className="p-4 space-y-3">
           {/* Title & Icon */}
           {(note.title || note.icon) && (
@@ -177,8 +170,14 @@ export function NoteCard({ note }: NoteCardProps) {
           </DropdownMenu>
         </div>
 
-        {/* Add to Timeline Button */}
-        <div className="px-4 pb-3 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Bottom Actions Bar */}
+        <div className="px-4 pb-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {note.is_pinned && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary">
+              <Pin className="h-3 w-3 fill-current" />
+              <span className="text-xs font-medium">Pinned</span>
+            </div>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -186,7 +185,7 @@ export function NoteCard({ note }: NoteCardProps) {
               e.stopPropagation();
               setShowTimelineDialog(true);
             }}
-            className="w-full gap-2"
+            className="flex-1 gap-2"
           >
             <CalendarClock className="h-3.5 w-3.5" />
             Add to Timeline
