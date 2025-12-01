@@ -790,6 +790,56 @@ export type Database = {
         }
         Relationships: []
       }
+      study_homework: {
+        Row: {
+          amount: number
+          amount_type: string
+          completed_at: string | null
+          created_at: string
+          deadline: string
+          id: string
+          notes: string | null
+          status: string
+          subject_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_type?: string
+          completed_at?: string | null
+          created_at?: string
+          deadline: string
+          id?: string
+          notes?: string | null
+          status?: string
+          subject_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          amount_type?: string
+          completed_at?: string | null
+          created_at?: string
+          deadline?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          subject_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_homework_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_lessons: {
         Row: {
           completed_at: string | null
