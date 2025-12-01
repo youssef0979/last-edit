@@ -70,11 +70,23 @@ const Profile = () => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
 
-      setProfile(profileData);
+      // If no profile exists, create one
+      if (!profileData) {
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({ id: user.id, full_name: user.user_metadata?.full_name || null })
+          .select()
+          .single();
+        
+        if (createError) throw createError;
+        setProfile(newProfile);
+      } else {
+        setProfile(profileData);
+      }
     } catch (error: any) {
       toast({
         title: "Error loading profile",
