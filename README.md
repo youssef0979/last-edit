@@ -305,18 +305,6 @@ Future enhancements (not yet implemented):
 - Social features (optional)
 - Mobile app version
 
-## 🙏 Acknowledgments
-
-Built with [Lovable](https://lovable.dev) - The AI-powered full-stack development platform.
-
-Technologies:
-- React Team for React
-- Vercel for Next.js patterns
-- Supabase for backend infrastructure
-- Shadcn for UI components
-- Recharts for data visualization
-
----
 
 **Happy Tracking! 🎉**
 
