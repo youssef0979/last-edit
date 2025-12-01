@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff, Plus, FileText, HelpCircle, GraduationCap, AlertTriangle } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff, Plus, FileText, HelpCircle, GraduationCap, AlertTriangle, RefreshCw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,12 +81,47 @@ export default function Subject() {
   const [showCompleted, setShowCompleted] = useState(false);
   const [homeworkDialogOpen, setHomeworkDialogOpen] = useState(false);
   const [examDialogOpen, setExamDialogOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchSubjectData();
     }
   }, [id]);
+
+  // Real-time subscription for new lessons
+  useEffect(() => {
+    if (!id) return;
+
+    const channel = supabase
+      .channel('study-lessons-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'study_lessons',
+          filter: `subject_id=eq.${id}`,
+        },
+        (payload) => {
+          const newLesson = payload.new as Lesson;
+          setLessons((prev) => {
+            // Check if lesson already exists
+            if (prev.some(l => l.id === newLesson.id)) return prev;
+            // Add and sort by lesson_number
+            return [...prev, newLesson].sort((a, b) => a.lesson_number - b.lesson_number);
+          });
+          // Update subject's pending_lessons count
+          setSubject((prev) => prev ? { ...prev, pending_lessons: prev.pending_lessons + 1 } : prev);
+          toast({ title: "New lesson released!", description: newLesson.title });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, toast]);
 
   const fetchSubjectData = async () => {
     try {
@@ -197,6 +232,33 @@ export default function Subject() {
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const generateLessonNow = async () => {
+    if (!subject) return;
+
+    setGenerating(true);
+    try {
+      const { error } = await supabase.functions.invoke('generate-lessons');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Lesson generation triggered",
+        description: "If a lesson is due, it will appear shortly.",
+      });
+      
+      // Refresh subject data to get updated next_release_at
+      fetchSubjectData();
+    } catch (error: any) {
+      toast({
+        title: "Error generating lesson",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -473,9 +535,24 @@ export default function Subject() {
                   )}
                 </div>
               </div>
-              <Button variant={subject.is_paused ? "default" : "outline"} size="sm" onClick={togglePause}>
-                {subject.is_paused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={generateLessonNow}
+                  disabled={generating}
+                >
+                  {generating ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                  )}
+                  Generate Now
+                </Button>
+                <Button variant={subject.is_paused ? "default" : "outline"} size="sm" onClick={togglePause}>
+                  {subject.is_paused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
