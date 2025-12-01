@@ -790,6 +790,53 @@ export type Database = {
         }
         Relationships: []
       }
+      study_exams: {
+        Row: {
+          created_at: string
+          exam_date: string
+          id: string
+          importance: string
+          notes: string | null
+          status: string
+          subject_id: string
+          topics: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exam_date: string
+          id?: string
+          importance?: string
+          notes?: string | null
+          status?: string
+          subject_id: string
+          topics: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          exam_date?: string
+          id?: string
+          importance?: string
+          notes?: string | null
+          status?: string
+          subject_id?: string
+          topics?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_exams_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_homework: {
         Row: {
           amount: number
