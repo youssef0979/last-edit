@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff, Plus, FileText, HelpCircle, GraduationCap, AlertTriangle, RefreshCw } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff, Plus, FileText, HelpCircle, GraduationCap, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AddHomeworkDialog } from "@/components/study/AddHomeworkDialog";
 import { AddExamDialog } from "@/components/study/AddExamDialog";
+import { AddLessonDialog } from "@/components/study/AddLessonDialog";
 import { format, isPast, isToday, differenceInDays } from "date-fns";
 
 interface Subject {
@@ -81,7 +83,9 @@ export default function Subject() {
   const [showCompleted, setShowCompleted] = useState(false);
   const [homeworkDialogOpen, setHomeworkDialogOpen] = useState(false);
   const [examDialogOpen, setExamDialogOpen] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [lessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   useEffect(() => {
     if (id) {
@@ -235,30 +239,34 @@ export default function Subject() {
     }
   };
 
-  const generateLessonNow = async () => {
-    if (!subject) return;
+  const startEditingLesson = (lesson: Lesson) => {
+    setEditingLessonId(lesson.id);
+    setEditingTitle(lesson.title);
+  };
 
-    setGenerating(true);
+  const cancelEditingLesson = () => {
+    setEditingLessonId(null);
+    setEditingTitle("");
+  };
+
+  const saveEditingLesson = async () => {
+    if (!editingLessonId || !editingTitle.trim()) return;
+
     try {
-      const { error } = await supabase.functions.invoke('generate-lessons');
-      
+      const { error } = await supabase
+        .from("study_lessons")
+        .update({ title: editingTitle.trim() })
+        .eq("id", editingLessonId);
+
       if (error) throw error;
 
-      toast({
-        title: "Lesson generation triggered",
-        description: "If a lesson is due, it will appear shortly.",
-      });
-      
-      // Refresh subject data to get updated next_release_at
-      fetchSubjectData();
+      setLessons(lessons.map(l => 
+        l.id === editingLessonId ? { ...l, title: editingTitle.trim() } : l
+      ));
+      toast({ title: "Lesson renamed" });
+      cancelEditingLesson();
     } catch (error: any) {
-      toast({
-        title: "Error generating lesson",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setGenerating(false);
+      toast({ title: "Error updating lesson", description: error.message, variant: "destructive" });
     }
   };
 
@@ -535,24 +543,9 @@ export default function Subject() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={generateLessonNow}
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                  )}
-                  Generate Now
-                </Button>
-                <Button variant={subject.is_paused ? "default" : "outline"} size="sm" onClick={togglePause}>
-                  {subject.is_paused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
-                </Button>
-              </div>
+              <Button variant={subject.is_paused ? "default" : "outline"} size="sm" onClick={togglePause}>
+                {subject.is_paused ? <><Play className="h-4 w-4 mr-2" />Resume</> : <><Pause className="h-4 w-4 mr-2" />Pause</>}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -726,32 +719,71 @@ export default function Subject() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Lessons</CardTitle>
-            {completedLessons.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setShowCompleted(!showCompleted)}>
-                {showCompleted ? <><EyeOff className="h-4 w-4 mr-2" />Hide Completed</> : <><Eye className="h-4 w-4 mr-2" />Show Completed ({completedLessons.length})</>}
+            <div className="flex items-center gap-2">
+              {completedLessons.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={() => setShowCompleted(!showCompleted)}>
+                  {showCompleted ? <><EyeOff className="h-4 w-4 mr-2" />Hide Completed</> : <><Eye className="h-4 w-4 mr-2" />Show Completed ({completedLessons.length})</>}
+                </Button>
+              )}
+              <Button size="sm" onClick={() => setLessonDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Lesson
               </Button>
-            )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {displayedLessons.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              {pendingLessons.length === 0 && completedLessons.length > 0 ? "All lessons completed!" : "No lessons yet."}
+              {pendingLessons.length === 0 && completedLessons.length > 0 ? "All lessons completed!" : "No lessons yet. Add one to get started."}
             </p>
           ) : (
             <div className="space-y-2">
               {displayedLessons.map((lesson) => (
-                <div key={lesson.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-3">
+                <div key={lesson.id} className="group flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center gap-3 flex-1">
                     <button onClick={() => lesson.status === "completed" ? markLessonPending(lesson) : markLessonComplete(lesson)} className="flex-shrink-0">
                       {lesson.status === "completed" ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-500 transition-colors" />}
                     </button>
-                    <div>
-                      <p className={`font-medium ${lesson.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{lesson.title}</p>
-                      {lesson.released_at && <p className="text-xs text-muted-foreground">Released {format(new Date(lesson.released_at), "MMM d, yyyy")}</p>}
-                    </div>
+                    {editingLessonId === lesson.id ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <Input
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          className="h-8"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEditingLesson();
+                            if (e.key === "Escape") cancelEditingLesson();
+                          }}
+                        />
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={saveEditingLesson}>
+                          <Check className="h-4 w-4 text-emerald-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={cancelEditingLesson}>
+                          <X className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-1">
+                        <div>
+                          <p className={`font-medium ${lesson.status === "completed" ? "line-through text-muted-foreground" : ""}`}>{lesson.title}</p>
+                          {lesson.released_at && <p className="text-xs text-muted-foreground">Released {format(new Date(lesson.released_at), "MMM d, yyyy")}</p>}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 opacity-0 group-hover:opacity-100 hover:opacity-100 ml-auto"
+                          onClick={() => startEditingLesson(lesson)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <Badge variant={lesson.status === "completed" ? "secondary" : "outline"}>{lesson.status}</Badge>
+                  {editingLessonId !== lesson.id && (
+                    <Badge variant={lesson.status === "completed" ? "secondary" : "outline"}>{lesson.status}</Badge>
+                  )}
                 </div>
               ))}
             </div>
@@ -761,6 +793,7 @@ export default function Subject() {
 
       <AddHomeworkDialog open={homeworkDialogOpen} onOpenChange={setHomeworkDialogOpen} subjectId={subject.id} onHomeworkCreated={fetchSubjectData} />
       <AddExamDialog open={examDialogOpen} onOpenChange={setExamDialogOpen} subjectId={subject.id} onExamCreated={fetchSubjectData} />
+      <AddLessonDialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen} subjectId={subject.id} currentLessonCount={lessons.length} onLessonCreated={fetchSubjectData} />
     </div>
   );
 }
