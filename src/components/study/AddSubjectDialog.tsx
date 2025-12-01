@@ -11,6 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COLORS = [
   "#3b82f6", // blue
@@ -22,6 +29,22 @@ const COLORS = [
   "#06b6d4", // cyan
   "#84cc16", // lime
 ];
+
+const DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+const HOURS = Array.from({ length: 24 }, (_, i) => {
+  const hour = i % 12 || 12;
+  const ampm = i < 12 ? "AM" : "PM";
+  return { value: `${i.toString().padStart(2, "0")}:00`, label: `${hour}:00 ${ampm}` };
+});
 
 interface AddSubjectDialogProps {
   open: boolean;
@@ -36,6 +59,9 @@ export function AddSubjectDialog({
 }: AddSubjectDialogProps) {
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
+  const [pendingLessons, setPendingLessons] = useState("0");
+  const [releaseDay, setReleaseDay] = useState("");
+  const [releaseTime, setReleaseTime] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -51,26 +77,79 @@ export function AddSubjectDialog({
       return;
     }
 
+    const lessonsCount = parseInt(pendingLessons) || 0;
+    if (lessonsCount < 0) {
+      toast({
+        title: "Invalid number",
+        description: "Pending lessons must be 0 or greater.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await supabase.from("study_subjects").insert({
-        user_id: user.id,
-        name: name.trim(),
-        color,
-      });
+      // Calculate next release date if schedule is set
+      let nextReleaseAt: string | null = null;
+      let releaseSchedule: string | null = null;
+      
+      if (releaseDay && releaseTime) {
+        releaseSchedule = `Every ${releaseDay} at ${HOURS.find(h => h.value === releaseTime)?.label || releaseTime}`;
+        nextReleaseAt = calculateNextRelease(releaseDay, releaseTime);
+      }
+
+      // Create the subject
+      const { data: subject, error } = await supabase
+        .from("study_subjects")
+        .insert({
+          user_id: user.id,
+          name: name.trim(),
+          color,
+          pending_lessons: lessonsCount,
+          release_schedule: releaseSchedule,
+          release_day: releaseDay || null,
+          release_time: releaseTime || null,
+          next_release_at: nextReleaseAt,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Generate initial pending lessons if any
+      if (lessonsCount > 0 && subject) {
+        const lessons = Array.from({ length: lessonsCount }, (_, i) => ({
+          subject_id: subject.id,
+          user_id: user.id,
+          title: `Lesson ${i + 1}`,
+          lesson_number: i + 1,
+          status: "pending",
+          released_at: new Date().toISOString(),
+        }));
+
+        const { error: lessonsError } = await supabase
+          .from("study_lessons")
+          .insert(lessons);
+
+        if (lessonsError) {
+          console.error("Error creating lessons:", lessonsError);
+        }
+      }
+
       toast({
         title: "Subject created",
-        description: `"${name}" has been added to your study planner.`,
+        description: `"${name}" has been added with ${lessonsCount} pending lessons.`,
       });
 
+      // Reset form
       setName("");
       setColor(COLORS[0]);
+      setPendingLessons("0");
+      setReleaseDay("");
+      setReleaseTime("");
       onSubjectCreated();
     } catch (error: any) {
       toast({
@@ -83,9 +162,28 @@ export function AddSubjectDialog({
     }
   };
 
+  const calculateNextRelease = (day: string, time: string): string => {
+    const now = new Date();
+    const targetDay = DAYS.indexOf(day);
+    const [hours] = time.split(":").map(Number);
+    
+    const next = new Date(now);
+    next.setHours(hours, 0, 0, 0);
+    
+    const currentDay = now.getDay();
+    let daysUntilTarget = targetDay - currentDay;
+    
+    if (daysUntilTarget < 0 || (daysUntilTarget === 0 && now.getHours() >= hours)) {
+      daysUntilTarget += 7;
+    }
+    
+    next.setDate(next.getDate() + daysUntilTarget);
+    return next.toISOString();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Add New Subject</DialogTitle>
         </DialogHeader>
@@ -118,6 +216,55 @@ export function AddSubjectDialog({
                 />
               ))}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pendingLessons">Number of Pending Lessons</Label>
+            <Input
+              id="pendingLessons"
+              type="number"
+              min="0"
+              value={pendingLessons}
+              onChange={(e) => setPendingLessons(e.target.value)}
+              placeholder="0"
+            />
+            <p className="text-xs text-muted-foreground">
+              Unfinished lessons that are already available
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Lesson Release Schedule</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <Select value={releaseDay} onValueChange={setReleaseDay}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select day" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS.map((day) => (
+                    <SelectItem key={day} value={day}>
+                      {day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={releaseTime} onValueChange={setReleaseTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOURS.map((hour) => (
+                    <SelectItem key={hour.value} value={hour.value}>
+                      {hour.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              When new lessons will be automatically released
+            </p>
           </div>
 
           <DialogFooter>
