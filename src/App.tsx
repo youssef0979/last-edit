@@ -20,6 +20,8 @@ import Gym from "./pages/Gym";
 import Schedule from "./pages/Schedule";
 import Notes from "./pages/Notes";
 import NoteEditor from "./pages/NoteEditor";
+import StudyPlanner from "./pages/StudyPlanner";
+import Subject from "./pages/Subject";
 import DesignSystem from "./pages/DesignSystem";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
@@ -71,6 +73,8 @@ const App = () => (
               <Route path="/notes" element={<Layout><Notes /></Layout>} />
               <Route path="/notes/new" element={<NoteEditor />} />
               <Route path="/notes/:noteId" element={<NoteEditor />} />
+              <Route path="/study" element={<Layout><StudyPlanner /></Layout>} />
+              <Route path="/study/:id" element={<Layout><Subject /></Layout>} />
               <Route path="/design-system" element={<Layout><DesignSystem /></Layout>} />
               <Route path="/admin" element={<AdminUsers />} />
               <Route path="/admin/analytics" element={<AdminAnalytics />} />
