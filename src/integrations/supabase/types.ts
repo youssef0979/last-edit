@@ -790,6 +790,53 @@ export type Database = {
         }
         Relationships: []
       }
+      study_lessons: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          lesson_number: number
+          released_at: string | null
+          status: string
+          subject_id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_number: number
+          released_at?: string | null
+          status?: string
+          subject_id: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_number?: number
+          released_at?: string | null
+          status?: string
+          subject_id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_lessons_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "study_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_subjects: {
         Row: {
           color: string
@@ -797,6 +844,11 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          next_release_at: string | null
+          pending_lessons: number
+          release_day: string | null
+          release_schedule: string | null
+          release_time: string | null
           updated_at: string
           user_id: string
         }
@@ -806,6 +858,11 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          next_release_at?: string | null
+          pending_lessons?: number
+          release_day?: string | null
+          release_schedule?: string | null
+          release_time?: string | null
           updated_at?: string
           user_id: string
         }
@@ -815,6 +872,11 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          next_release_at?: string | null
+          pending_lessons?: number
+          release_day?: string | null
+          release_schedule?: string | null
+          release_time?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, BookOpen, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, BookOpen, Loader2, Calendar, Clock } from "lucide-react";
 import { AddSubjectDialog } from "@/components/study/AddSubjectDialog";
 
 interface Subject {
@@ -12,6 +13,9 @@ interface Subject {
   name: string;
   color: string;
   icon: string;
+  pending_lessons: number;
+  release_schedule: string | null;
+  next_release_at: string | null;
   created_at: string;
 }
 
@@ -104,23 +108,50 @@ export default function StudyPlanner() {
               onClick={() => navigate(`/study/${subject.id}`)}
             >
               <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="h-10 w-10 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: subject.color + "20" }}
-                  >
-                    <BookOpen
-                      className="h-5 w-5"
-                      style={{ color: subject.color }}
-                    />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-10 w-10 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: subject.color + "20" }}
+                    >
+                      <BookOpen
+                        className="h-5 w-5"
+                        style={{ color: subject.color }}
+                      />
+                    </div>
+                    <CardTitle className="text-lg">{subject.name}</CardTitle>
                   </div>
-                  <CardTitle className="text-lg">{subject.name}</CardTitle>
+                  {subject.pending_lessons > 0 && (
+                    <Badge variant="secondary">
+                      {subject.pending_lessons} pending
+                    </Badge>
+                  )}
                 </div>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Click to view subject details
-                </p>
+              <CardContent className="space-y-2">
+                {subject.release_schedule && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    <span>{subject.release_schedule}</span>
+                  </div>
+                )}
+                {subject.next_release_at && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>
+                      Next: {new Date(subject.next_release_at).toLocaleDateString(undefined, {
+                        weekday: 'short',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                )}
+                {!subject.release_schedule && !subject.next_release_at && (
+                  <p className="text-sm text-muted-foreground">
+                    Click to view lessons
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}
