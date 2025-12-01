@@ -19,14 +19,15 @@ serve(async (req) => {
 
     console.log("Starting lesson generation check...");
 
-    // Find subjects where next_release_at is in the past
+    // Find subjects where next_release_at is in the past and not paused
     const now = new Date().toISOString();
     
     const { data: subjects, error: subjectsError } = await supabase
       .from("study_subjects")
       .select("*")
       .not("next_release_at", "is", null)
-      .lte("next_release_at", now);
+      .lte("next_release_at", now)
+      .eq("is_paused", false); // Only process non-paused subjects
 
     if (subjectsError) {
       console.error("Error fetching subjects:", subjectsError);
@@ -36,7 +37,7 @@ serve(async (req) => {
     console.log(`Found ${subjects?.length || 0} subjects due for lesson release`);
 
     for (const subject of subjects || []) {
-      // Get the current max lesson number for this subject
+      // Get the current max lesson number for this subject to prevent duplication
       const { data: maxLesson } = await supabase
         .from("study_lessons")
         .select("lesson_number")
@@ -46,6 +47,19 @@ serve(async (req) => {
         .single();
 
       const nextLessonNumber = (maxLesson?.lesson_number || 0) + 1;
+
+      // Check if a lesson with this number already exists (prevent duplication)
+      const { data: existingLesson } = await supabase
+        .from("study_lessons")
+        .select("id")
+        .eq("subject_id", subject.id)
+        .eq("lesson_number", nextLessonNumber)
+        .single();
+
+      if (existingLesson) {
+        console.log(`Lesson ${nextLessonNumber} already exists for subject ${subject.name}, skipping`);
+        continue;
+      }
 
       // Create new lesson
       const { error: lessonError } = await supabase

@@ -843,6 +843,7 @@ export type Database = {
           created_at: string
           icon: string | null
           id: string
+          is_paused: boolean
           name: string
           next_release_at: string | null
           pending_lessons: number
@@ -857,6 +858,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          is_paused?: boolean
           name: string
           next_release_at?: string | null
           pending_lessons?: number
@@ -871,6 +873,7 @@ export type Database = {
           created_at?: string
           icon?: string | null
           id?: string
+          is_paused?: boolean
           name?: string
           next_release_at?: string | null
           pending_lessons?: number
