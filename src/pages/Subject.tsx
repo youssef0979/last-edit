@@ -5,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,7 @@ interface Subject {
   release_day: string | null;
   release_time: string | null;
   next_release_at: string | null;
+  is_paused: boolean;
   created_at: string;
 }
 
@@ -49,6 +52,7 @@ export default function Subject() {
   const [subject, setSubject] = useState<Subject | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCompleted, setShowCompleted] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -75,7 +79,7 @@ export default function Subject() {
       if (subjectError) throw subjectError;
       setSubject(subjectData);
 
-      // Fetch lessons for this subject
+      // Fetch lessons for this subject ordered chronologically
       const { data: lessonsData, error: lessonsError } = await supabase
         .from("study_lessons")
         .select("*")
@@ -120,26 +124,108 @@ export default function Subject() {
     }
   };
 
-  const toggleLessonStatus = async (lesson: Lesson) => {
-    const newStatus = lesson.status === "completed" ? "pending" : "completed";
-    const completedAt = newStatus === "completed" ? new Date().toISOString() : null;
+  const togglePause = async () => {
+    if (!subject) return;
+
+    const newPausedState = !subject.is_paused;
 
     try {
       const { error } = await supabase
+        .from("study_subjects")
+        .update({ is_paused: newPausedState })
+        .eq("id", subject.id);
+
+      if (error) throw error;
+
+      setSubject({ ...subject, is_paused: newPausedState });
+      toast({
+        title: newPausedState ? "Auto-generation paused" : "Auto-generation resumed",
+        description: newPausedState 
+          ? "New lessons will not be automatically generated." 
+          : "Lessons will be generated according to schedule.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating subject",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const markLessonComplete = async (lesson: Lesson) => {
+    try {
+      const { error } = await supabase
         .from("study_lessons")
-        .update({ status: newStatus, completed_at: completedAt })
+        .update({ 
+          status: "completed", 
+          completed_at: new Date().toISOString() 
+        })
+        .eq("id", lesson.id);
+
+      if (error) throw error;
+
+      // Remove from list (it will be hidden)
+      setLessons(lessons.map(l => 
+        l.id === lesson.id 
+          ? { ...l, status: "completed", completed_at: new Date().toISOString() }
+          : l
+      ));
+
+      // Update pending count in subject
+      if (subject) {
+        const newPendingCount = Math.max(0, subject.pending_lessons - 1);
+        setSubject({ ...subject, pending_lessons: newPendingCount });
+        
+        // Also update in database
+        await supabase
+          .from("study_subjects")
+          .update({ pending_lessons: newPendingCount })
+          .eq("id", subject.id);
+      }
+
+      toast({
+        title: "Lesson completed!",
+        description: `${lesson.title} marked as complete.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating lesson",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const markLessonPending = async (lesson: Lesson) => {
+    try {
+      const { error } = await supabase
+        .from("study_lessons")
+        .update({ status: "pending", completed_at: null })
         .eq("id", lesson.id);
 
       if (error) throw error;
 
       setLessons(lessons.map(l => 
         l.id === lesson.id 
-          ? { ...l, status: newStatus, completed_at: completedAt }
+          ? { ...l, status: "pending", completed_at: null }
           : l
       ));
 
+      // Update pending count in subject
+      if (subject) {
+        const newPendingCount = subject.pending_lessons + 1;
+        setSubject({ ...subject, pending_lessons: newPendingCount });
+        
+        await supabase
+          .from("study_subjects")
+          .update({ pending_lessons: newPendingCount })
+          .eq("id", subject.id);
+      }
+
       toast({
-        title: newStatus === "completed" ? "Lesson completed!" : "Lesson marked as pending",
+        title: "Lesson restored",
+        description: `${lesson.title} marked as pending.`,
       });
     } catch (error: any) {
       toast({
@@ -169,8 +255,9 @@ export default function Subject() {
     );
   }
 
-  const completedCount = lessons.filter(l => l.status === "completed").length;
-  const pendingCount = lessons.filter(l => l.status === "pending").length;
+  const completedLessons = lessons.filter(l => l.status === "completed");
+  const pendingLessons = lessons.filter(l => l.status === "pending");
+  const displayedLessons = showCompleted ? lessons : pendingLessons;
 
   return (
     <div className="space-y-6">
@@ -238,7 +325,7 @@ export default function Subject() {
                 <Clock className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{pendingCount}</p>
+                <p className="text-2xl font-bold">{pendingLessons.length}</p>
                 <p className="text-sm text-muted-foreground">Pending</p>
               </div>
             </div>
@@ -252,7 +339,7 @@ export default function Subject() {
                 <CheckCircle2 className="h-5 w-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{completedCount}</p>
+                <p className="text-2xl font-bold">{completedLessons.length}</p>
                 <p className="text-sm text-muted-foreground">Completed</p>
               </div>
             </div>
@@ -260,26 +347,48 @@ export default function Subject() {
         </Card>
       </div>
 
-      {/* Release Schedule */}
+      {/* Release Schedule & Pause Control */}
       {subject.release_schedule && (
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="font-medium">{subject.release_schedule}</p>
-                {subject.next_release_at && (
-                  <p className="text-sm text-muted-foreground">
-                    Next release: {new Date(subject.next_release_at).toLocaleDateString(undefined, {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                )}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="font-medium">{subject.release_schedule}</p>
+                  {subject.next_release_at && !subject.is_paused && (
+                    <p className="text-sm text-muted-foreground">
+                      Next release: {new Date(subject.next_release_at).toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  )}
+                  {subject.is_paused && (
+                    <p className="text-sm text-amber-600">Auto-generation is paused</p>
+                  )}
+                </div>
               </div>
+              <Button
+                variant={subject.is_paused ? "default" : "outline"}
+                size="sm"
+                onClick={togglePause}
+              >
+                {subject.is_paused ? (
+                  <>
+                    <Play className="h-4 w-4 mr-2" />
+                    Resume
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-4 w-4 mr-2" />
+                    Pause
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -288,29 +397,58 @@ export default function Subject() {
       {/* Lessons List */}
       <Card>
         <CardHeader>
-          <CardTitle>Lessons</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Lessons</CardTitle>
+            {completedLessons.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCompleted(!showCompleted)}
+              >
+                {showCompleted ? (
+                  <>
+                    <EyeOff className="h-4 w-4 mr-2" />
+                    Hide Completed
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Show Completed ({completedLessons.length})
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {lessons.length === 0 ? (
+          {displayedLessons.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              No lessons yet. They will appear here when released.
+              {showCompleted 
+                ? "No lessons yet. They will appear here when released."
+                : pendingLessons.length === 0 && completedLessons.length > 0
+                  ? "All lessons completed! Great job!"
+                  : "No lessons yet. They will appear here when released."
+              }
             </p>
           ) : (
             <div className="space-y-2">
-              {lessons.map((lesson) => (
+              {displayedLessons.map((lesson) => (
                 <div
                   key={lesson.id}
                   className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
                     <button
-                      onClick={() => toggleLessonStatus(lesson)}
+                      onClick={() => lesson.status === "completed" 
+                        ? markLessonPending(lesson) 
+                        : markLessonComplete(lesson)
+                      }
                       className="flex-shrink-0"
                     >
                       {lesson.status === "completed" ? (
                         <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                       ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground" />
+                        <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-500 transition-colors" />
                       )}
                     </button>
                     <div>
