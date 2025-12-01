@@ -5,9 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, BookOpen, Loader2, Trash2, Calendar, Clock, CheckCircle2, Circle, Pause, Play, Eye, EyeOff, Plus, FileText, HelpCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +17,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AddHomeworkDialog } from "@/components/study/AddHomeworkDialog";
+import { format, isPast, isToday } from "date-fns";
 
 interface Subject {
   id: string;
@@ -45,14 +45,28 @@ interface Lesson {
   created_at: string;
 }
 
+interface Homework {
+  id: string;
+  subject_id: string;
+  amount: number;
+  amount_type: string;
+  deadline: string;
+  notes: string | null;
+  status: string;
+  completed_at: string | null;
+  created_at: string;
+}
+
 export default function Subject() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [subject, setSubject] = useState<Subject | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [homework, setHomework] = useState<Homework[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [homeworkDialogOpen, setHomeworkDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -89,6 +103,17 @@ export default function Subject() {
 
       if (lessonsError) throw lessonsError;
       setLessons(lessonsData || []);
+
+      // Fetch homework for this subject
+      const { data: homeworkData, error: homeworkError } = await supabase
+        .from("study_homework")
+        .select("*")
+        .eq("subject_id", id)
+        .eq("user_id", user.id)
+        .order("deadline", { ascending: true });
+
+      if (homeworkError) throw homeworkError;
+      setHomework(homeworkData || []);
     } catch (error: any) {
       toast({
         title: "Error loading subject",
@@ -165,19 +190,16 @@ export default function Subject() {
 
       if (error) throw error;
 
-      // Remove from list (it will be hidden)
       setLessons(lessons.map(l => 
         l.id === lesson.id 
           ? { ...l, status: "completed", completed_at: new Date().toISOString() }
           : l
       ));
 
-      // Update pending count in subject
       if (subject) {
         const newPendingCount = Math.max(0, subject.pending_lessons - 1);
         setSubject({ ...subject, pending_lessons: newPendingCount });
         
-        // Also update in database
         await supabase
           .from("study_subjects")
           .update({ pending_lessons: newPendingCount })
@@ -212,7 +234,6 @@ export default function Subject() {
           : l
       ));
 
-      // Update pending count in subject
       if (subject) {
         const newPendingCount = subject.pending_lessons + 1;
         setSubject({ ...subject, pending_lessons: newPendingCount });
@@ -234,6 +255,70 @@ export default function Subject() {
         variant: "destructive",
       });
     }
+  };
+
+  const markHomeworkComplete = async (hw: Homework) => {
+    try {
+      const { error } = await supabase
+        .from("study_homework")
+        .update({ 
+          status: "completed", 
+          completed_at: new Date().toISOString() 
+        })
+        .eq("id", hw.id);
+
+      if (error) throw error;
+
+      setHomework(homework.map(h => 
+        h.id === hw.id 
+          ? { ...h, status: "completed", completed_at: new Date().toISOString() }
+          : h
+      ));
+
+      toast({
+        title: "Homework completed!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error updating homework",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteHomework = async (hw: Homework) => {
+    try {
+      const { error } = await supabase
+        .from("study_homework")
+        .delete()
+        .eq("id", hw.id);
+
+      if (error) throw error;
+
+      setHomework(homework.filter(h => h.id !== hw.id));
+
+      toast({
+        title: "Homework deleted",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error deleting homework",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getDeadlineStatus = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    if (isPast(deadlineDate) && !isToday(deadlineDate)) {
+      return "overdue";
+    }
+    if (isToday(deadlineDate)) {
+      return "today";
+    }
+    return "upcoming";
   };
 
   if (loading) {
@@ -258,6 +343,7 @@ export default function Subject() {
   const completedLessons = lessons.filter(l => l.status === "completed");
   const pendingLessons = lessons.filter(l => l.status === "pending");
   const displayedLessons = showCompleted ? lessons : pendingLessons;
+  const pendingHomework = homework.filter(h => h.status === "pending");
 
   return (
     <div className="space-y-6">
@@ -326,7 +412,7 @@ export default function Subject() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingLessons.length}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">Pending Lessons</p>
               </div>
             </div>
           </CardContent>
@@ -393,6 +479,98 @@ export default function Subject() {
           </CardContent>
         </Card>
       )}
+
+      {/* Homework Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Homework
+            </CardTitle>
+            <Button size="sm" onClick={() => setHomeworkDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Homework
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {pendingHomework.length === 0 ? (
+            <p className="text-muted-foreground text-center py-8">
+              No pending homework. Add some to track your assignments.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {pendingHomework.map((hw) => {
+                const deadlineStatus = getDeadlineStatus(hw.deadline);
+                return (
+                  <div
+                    key={hw.id}
+                    className="flex items-start justify-between p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3">
+                      <button
+                        onClick={() => markHomeworkComplete(hw)}
+                        className="flex-shrink-0 mt-0.5"
+                      >
+                        <Circle className="h-5 w-5 text-muted-foreground hover:text-emerald-500 transition-colors" />
+                      </button>
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          {hw.amount_type === "pages" ? (
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          )}
+                          <span className="font-medium">
+                            {hw.amount} {hw.amount_type}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className={
+                            deadlineStatus === "overdue" 
+                              ? "text-destructive font-medium" 
+                              : deadlineStatus === "today" 
+                                ? "text-amber-600 font-medium" 
+                                : "text-muted-foreground"
+                          }>
+                            {deadlineStatus === "overdue" && "Overdue: "}
+                            {deadlineStatus === "today" && "Due today: "}
+                            {format(new Date(hw.deadline), "MMM d, yyyy")}
+                          </span>
+                        </div>
+                        {hw.notes && (
+                          <p className="text-sm text-muted-foreground">{hw.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete Homework</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this homework?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteHomework(hw)}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Lessons List */}
       <Card>
@@ -471,6 +649,13 @@ export default function Subject() {
           )}
         </CardContent>
       </Card>
+
+      <AddHomeworkDialog
+        open={homeworkDialogOpen}
+        onOpenChange={setHomeworkDialogOpen}
+        subjectId={subject.id}
+        onHomeworkCreated={fetchSubjectAndLessons}
+      />
     </div>
   );
 }
