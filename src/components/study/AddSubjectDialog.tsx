@@ -40,11 +40,13 @@ const DAYS = [
   "Saturday",
 ];
 
-const HOURS = Array.from({ length: 24 }, (_, i) => {
-  const hour = i % 12 || 12;
-  const ampm = i < 12 ? "AM" : "PM";
-  return { value: `${i.toString().padStart(2, "0")}:00`, label: `${hour}:00 ${ampm}` };
-});
+const formatTime = (time: string) => {
+  if (!time) return "";
+  const [hours, minutes] = time.split(":").map(Number);
+  const hour = hours % 12 || 12;
+  const ampm = hours < 12 ? "AM" : "PM";
+  return `${hour}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+};
 
 interface AddSubjectDialogProps {
   open: boolean;
@@ -97,7 +99,7 @@ export function AddSubjectDialog({
       let releaseSchedule: string | null = null;
       
       if (releaseDay && releaseTime) {
-        releaseSchedule = `Every ${releaseDay} at ${HOURS.find(h => h.value === releaseTime)?.label || releaseTime}`;
+        releaseSchedule = `Every ${releaseDay} at ${formatTime(releaseTime)}`;
         nextReleaseAt = calculateNextRelease(releaseDay, releaseTime);
       }
 
@@ -165,15 +167,18 @@ export function AddSubjectDialog({
   const calculateNextRelease = (day: string, time: string): string => {
     const now = new Date();
     const targetDay = DAYS.indexOf(day);
-    const [hours] = time.split(":").map(Number);
+    const [hours, minutes] = time.split(":").map(Number);
     
     const next = new Date(now);
-    next.setHours(hours, 0, 0, 0);
+    next.setHours(hours, minutes, 0, 0);
     
     const currentDay = now.getDay();
     let daysUntilTarget = targetDay - currentDay;
     
-    if (daysUntilTarget < 0 || (daysUntilTarget === 0 && now.getHours() >= hours)) {
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    const targetMinutes = hours * 60 + minutes;
+    
+    if (daysUntilTarget < 0 || (daysUntilTarget === 0 && currentMinutes >= targetMinutes)) {
       daysUntilTarget += 7;
     }
     
@@ -249,18 +254,12 @@ export function AddSubjectDialog({
                 </SelectContent>
               </Select>
 
-              <Select value={releaseTime} onValueChange={setReleaseTime}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {HOURS.map((hour) => (
-                    <SelectItem key={hour.value} value={hour.value}>
-                      {hour.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="time"
+                value={releaseTime}
+                onChange={(e) => setReleaseTime(e.target.value)}
+                placeholder="Select time"
+              />
             </div>
             <p className="text-xs text-muted-foreground">
               When new lessons will be automatically released

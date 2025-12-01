@@ -125,10 +125,10 @@ function calculateNextRelease(day: string, time: string): string {
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const now = new Date();
   const targetDay = DAYS.indexOf(day);
-  const [hours] = time.split(":").map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
   
   const next = new Date(now);
-  next.setHours(hours, 0, 0, 0);
+  next.setHours(hours, minutes || 0, 0, 0);
   
   const currentDay = now.getDay();
   let daysUntilTarget = targetDay - currentDay;
